@@ -43,12 +43,11 @@ export const profile = {
     // Poné `null` si no querés mostrar el WhatsApp públicamente.
     whatsapp: 'https://wa.me/543471332479' as string | null,
   },
-  // Los CV actuales nombran clientes; se desactivan hasta tener versiones sin nombres.
-  // Para activarlos: poné los PDF en public/cv/ y descomentá.
-  cvs: [
-    // { label: { es: 'CV en español', en: 'CV (Spanish)' }, href: '/cv/CV_Santiago_Giaveno_ES.pdf' },
-    // { label: { es: 'CV en inglés', en: 'CV (English)' }, href: '/cv/CV_Santiago_Giaveno_EN.pdf' },
-  ] as { label: L; href: string }[],
+  // CV sin nombres de clientes. Fuentes: Escritorio\CV\cv_portfolio\cv_es.html / cv_en.html
+  cvs: {
+    es: '/cv/CV_Santiago_Giaveno_ES.pdf',
+    en: '/cv/CV_Santiago_Giaveno_EN.pdf',
+  } as Record<'es' | 'en', string>,
   languages: { es: 'Español (nativo) · Inglés (B1 avanzado)', en: 'Spanish (native) · English (upper B1)' } as L,
 };
 

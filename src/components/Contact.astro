@@ -22,7 +22,8 @@ const year = new Date().getFullYear();
       </div>
       <div class="links">
         <a href={contact.github} target="_blank" rel="noopener">GitHub</a>
-        {cvs.map((c) => <a href={c.href} download>{c.label[lang]} ↓</a>)}
+        <a href={cvs[lang]} download>{t.downloadCv} ↓</a>
+        <a href={cvs[lang === 'es' ? 'en' : 'es']} download>{t.cvOther} ↓</a>
       </div>
     </div>
   </div>

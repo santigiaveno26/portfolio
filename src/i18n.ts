@@ -8,6 +8,8 @@ export const ui = {
     iBuild: 'Construyo',
     seeProjects: 'Ver proyectos',
     openToBtn: 'Qué estoy buscando',
+    downloadCv: 'Descargar CV',
+    cvOther: 'CV en inglés',
     openTo: {
       label: '// qué busco',
       title: 'Abierto a sumarme a una empresa',
@@ -44,6 +46,8 @@ export const ui = {
     iBuild: 'I build',
     seeProjects: 'See projects',
     openToBtn: "What I'm looking for",
+    downloadCv: 'Download CV',
+    cvOther: 'CV in Spanish',
     openTo: {
       label: '// open to',
       title: 'Open to joining a company',
