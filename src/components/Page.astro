@@ -1,0 +1,31 @@
+---
+import Base from '../layouts/Base.astro';
+import Intro from './Intro.astro';
+import Nav from './Nav.astro';
+import Hero from './Hero.astro';
+import OpenTo from './OpenTo.astro';
+import Projects from './Projects.astro';
+import Experience from './Experience.astro';
+import Skills from './Skills.astro';
+import Contact from './Contact.astro';
+import Chat from './Chat.astro';
+import Motion from './Motion.astro';
+import type { Lang } from '../data/profile';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+---
+<Base lang={lang}>
+  <Intro lang={lang} />
+  <Nav lang={lang} />
+  <main>
+    <Hero lang={lang} />
+    <OpenTo lang={lang} />
+    <Projects lang={lang} />
+    <Experience lang={lang} />
+    <Skills lang={lang} />
+    <Contact lang={lang} />
+  </main>
+  <Chat lang={lang} />
+  <Motion />
+</Base>

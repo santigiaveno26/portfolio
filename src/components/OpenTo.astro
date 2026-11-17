@@ -1,0 +1,80 @@
+---
+import { openTo, profile, type Lang } from '../data/profile';
+import { ui } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang].openTo;
+const { job, freelance } = openTo;
+const mailJob = `mailto:${profile.contact.email}?subject=${encodeURIComponent(t.jobSubject)}`;
+const wa = profile.contact.whatsapp
+  ? `${profile.contact.whatsapp}?text=${encodeURIComponent(ui[lang].contact.waText)}`
+  : `mailto:${profile.contact.email}`;
+---
+<section id="busco">
+  <div class="container">
+    <div class="build-block">
+      <p class="section-label">{t.label}</p>
+      <h2 class="section-title">{t.title}</h2>
+      <p class="section-sub">{t.sub}</p>
+    </div>
+
+    <div class="grid">
+      <article class="card job spot build-block">
+        <header>
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M9 3h6a2 2 0 0 1 2 2v1h3a2 2 0 0 1 2 2v4.3a3 3 0 0 1-1.6 2.7l-6.4 3.4a2 2 0 0 1-2 0L5.6 15A3 3 0 0 1 4 12.3V8a2 2 0 0 1 2-2h3V5a2 2 0 0 1 2-2Zm0 3h6V5H9v1Zm-5 9.8V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.2l-5.6 3a4 4 0 0 1-3.8 0Z"/></svg>
+          </span>
+          <span class="tag">{t.jobBadge}</span>
+        </header>
+        <h3>{job.title[lang]}</h3>
+        <p class="text">{job.text[lang]}</p>
+        <p class="mini">{t.roles}</p>
+        <ul class="roles">{job.roles[lang].map((r) => <li>{r}</li>)}</ul>
+        <ul class="details">{job.details[lang].map((d) => <li>{d}</li>)}</ul>
+        <div class="actions">
+          <a class="btn btn-primary" href={mailJob}>{t.jobCta}</a>
+          <a class="btn" href={profile.contact.linkedin} target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </article>
+
+      <article class="card spot build-block">
+        <header>
+          <span class="icon alt" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v1.1a8 8 0 0 1 6.9 6.9H21a1 1 0 1 1 0 2h-1.1a8 8 0 0 1-6.9 6.9V21a1 1 0 1 1-2 0v-1.1A8 8 0 0 1 4.1 13H3a1 1 0 1 1 0-2h1.1A8 8 0 0 1 11 4.1V3a1 1 0 0 1 1-1Zm0 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+          </span>
+        </header>
+        <h3>{freelance.title[lang]}</h3>
+        <p class="text">{freelance.text[lang]}</p>
+        <ul class="roles">{freelance.items[lang].map((r) => <li>{r}</li>)}</ul>
+        <div class="actions">
+          <a class="btn" href={wa} target="_blank" rel="noopener">{t.freelanceCta}</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  section { padding-top: 40px; }
+  .grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 18px; align-items: stretch; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; display: flex; flex-direction: column; }
+  .card.job {
+    border-color: rgba(62,224,168,.4);
+    background: linear-gradient(160deg, rgba(62,224,168,.08), var(--surface) 55%);
+  }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+  .icon.alt { background: rgba(90,169,255,.12); color: var(--accent-2); }
+  .tag { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); border: 1px solid rgba(62,224,168,.35); padding: 3px 9px; border-radius: 999px; }
+  h3 { margin: 0 0 8px; font-size: 1.25rem; }
+  .text { margin: 0 0 16px; color: var(--muted); }
+  .mini { margin: 0 0 6px; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .roles { margin: 0 0 14px; padding-left: 18px; }
+  .roles li { margin-bottom: 4px; }
+  .roles li::marker { color: var(--accent); }
+  .details { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .details li { font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+</style>

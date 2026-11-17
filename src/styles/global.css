@@ -1,0 +1,85 @@
+:root {
+  --bg: #0b0f14;
+  --bg-2: #10161e;
+  --surface: #141c26;
+  --surface-2: #1a2430;
+  --border: #233040;
+  --text: #e6edf3;
+  --muted: #8b9bb0;
+  --accent: #3ee0a8;      /* verde "terminal" */
+  --accent-2: #5aa9ff;    /* azul secundario */
+  --accent-soft: rgba(62, 224, 168, 0.12);
+  --warn: #ffb547;
+  --radius: 14px;
+  --maxw: 1080px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+
+.container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+section { padding: 88px 0; scroll-margin-top: 62px; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin: 0 0 10px;
+}
+.section-title { font-size: clamp(1.7rem, 3.5vw, 2.3rem); margin: 0 0 14px; line-height: 1.15; }
+.section-sub { color: var(--muted); max-width: 640px; margin: 0 0 40px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 20px; border-radius: 10px;
+  font-weight: 600; font-size: 0.95rem; text-decoration: none;
+  border: 1px solid var(--border); background: var(--surface);
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  cursor: pointer; color: var(--text);
+}
+.btn:hover { transform: translateY(-1px); border-color: var(--accent); }
+.btn-primary { background: var(--accent); color: #04120c; border-color: var(--accent); }
+.btn-primary:hover { background: #5bf0bc; }
+
+.chip {
+  display: inline-block; font-family: var(--mono); font-size: 0.75rem;
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted); border: 1px solid var(--border);
+}
+
+/* Bloques que "se arman" al aparecer (solo si hay JS; sin JS se ven normal) */
+html.js .build-block {
+  opacity: 0; transform: translateY(18px); filter: blur(4px);
+  transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1), filter .7s ease;
+}
+html.js .build-block.built { opacity: 1; transform: none; filter: none; }
+
+/* Luz que sigue al cursor (las coordenadas las pone Motion.astro) */
+.spot { position: relative; isolation: isolate; }
+.spot::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: radial-gradient(320px circle at var(--mx, -999px) var(--my, -999px), rgba(62,224,168,.09), transparent 60%);
+  opacity: 0; transition: opacity .3s;
+}
+.spot:hover::before { opacity: 1; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .build-block { opacity: 1; transform: none; filter: none; transition: none; }
+}

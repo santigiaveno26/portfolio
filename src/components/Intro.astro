@@ -1,0 +1,274 @@
+---
+import { projects, experience, skills, type Lang } from '../data/profile';
+import { pathFor } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+
+// Equipos de agentes (14 en total). Ajustá nombres/cantidades a gusto.
+const teams = [
+  { es: 'Relevamiento', en: 'Discovery', count: 2 },
+  { es: 'Datos', en: 'Data', count: 3 },
+  { es: 'Modelos', en: 'Models', count: 2 },
+  { es: 'Agentes / RAG', en: 'Agents / RAG', count: 3 },
+  { es: 'QA', en: 'QA', count: 2 },
+  { es: 'Deploy', en: 'Deploy', count: 2 },
+].map((t) => ({ name: t[lang], count: t.count }));
+const totalAgents = teams.reduce((n, t) => n + t.count, 0);
+const totalSkills = skills.reduce((n, s) => n + s.items.length, 0);
+
+// [equipo (índice), texto]. Sin nombres de clientes.
+const logs: Record<Lang, [number, string][]> = {
+  es: [
+    [0, 'leyendo CV_Santiago_Giaveno.pdf'],
+    [0, 'relevando qué busca quien visita: proyectos reales, no promesas'],
+    [1, `cargando ${projects.length} proyectos y ${experience.length} experiencias`],
+    [1, 'limpiando datos de la pasantía industrial'],
+    [2, 'validando modelo de demanda: cobertura out-of-sample ~92 %'],
+    [3, 'indexando proyectos para el chat del portfolio'],
+    [3, 'conectando el agente de WhatsApp en producción'],
+    [1, `ordenando ${totalSkills} habilidades en ${skills.length} grupos`],
+    [4, 'revisando contraste, teclado y versión mobile'],
+    [5, 'compilando con Astro'],
+    [5, 'publicando…'],
+  ],
+  en: [
+    [0, 'reading CV_Santiago_Giaveno.pdf'],
+    [0, 'figuring out what visitors want: real projects, not promises'],
+    [1, `loading ${projects.length} projects and ${experience.length} roles`],
+    [1, 'cleaning data from the industry internship'],
+    [2, 'validating demand model: ~92 % out-of-sample coverage'],
+    [3, 'indexing projects for the portfolio chat'],
+    [3, 'connecting the production WhatsApp agent'],
+    [1, `grouping ${totalSkills} skills into ${skills.length} areas`],
+    [4, 'checking contrast, keyboard and mobile layout'],
+    [5, 'building with Astro'],
+    [5, 'deploying…'],
+  ],
+};
+const t = {
+  es: { title: 'Introducción del portfolio', skip: 'Saltar', q: '¿Cómo querés ver el portfolio?', agents: `Ver cómo lo arman ${totalAgents} agentes`, direct: 'Ir directo a la página', launch: `lanzando workflow · ${totalAgents} agentes`, done: 'Listo. Te dejo la página terminada.' },
+  en: { title: 'Portfolio intro', skip: 'Skip', q: 'How do you want to see the portfolio?', agents: `Watch ${totalAgents} agents build it`, direct: 'Go straight to the page', launch: `launching workflow · ${totalAgents} agents`, done: 'Done. Here is the finished page.' },
+}[lang];
+
+const payload = JSON.stringify({ teams, log: logs[lang], lang, other: lang === 'es' ? 'en' : 'es', otherPath: pathFor(lang === 'es' ? 'en' : 'es'), done: t.done });
+---
+
+<div id="intro" class="intro" role="dialog" aria-modal="true" aria-label={t.title} data-payload={payload}>
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">santiago@portfolio: ~</span>
+      <button class="skip" type="button" data-skip>{t.skip} <kbd>Esc</kbd></button>
+    </div>
+
+    <div class="term-body">
+      <!-- Paso 0: idioma (bilingüe a propósito) -->
+      <div class="step" data-step="lang" hidden>
+        <p><span class="pr">$</span> ./portfolio --start</p>
+        <p class="q">Elegí el idioma · Choose your language</p>
+        <button class="opt" type="button" data-lang="es"><span class="k">1</span> Español</button>
+        <button class="opt" type="button" data-lang="en"><span class="k">2</span> English</button>
+      </div>
+
+      <!-- Paso 1: modo -->
+      <div class="step" data-step="mode" hidden>
+        <p><span class="pr">$</span> ./portfolio --lang={lang}</p>
+        <p class="q">{t.q}</p>
+        <button class="opt" type="button" data-opt="agents">
+          <span class="k">1</span> {t.agents} <span class="hint">(~10 s)</span>
+        </button>
+        <button class="opt" type="button" data-opt="direct"><span class="k">2</span> {t.direct}</button>
+      </div>
+
+      <!-- Paso 2: agentes trabajando -->
+      <div class="step" data-step="run" hidden>
+        <p><span class="pr">$</span> {t.launch}</p>
+        <div class="teams">
+          {teams.map((tm, i) => (
+            <div class="team" data-team={i}>
+              <span class="team-name">{tm.name}</span>
+              <span class="agents">{Array.from({ length: tm.count }).map(() => <i class="agent"></i>)}</span>
+            </div>
+          ))}
+        </div>
+        <ol class="log" data-log aria-live="polite"></ol>
+        <div class="progress"><span data-bar></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  type Payload = {
+    teams: { name: string; count: number }[];
+    log: [number, string][];
+    lang: 'es' | 'en';
+    other: 'es' | 'en';
+    otherPath: string;
+    done: string;
+  };
+
+  const root = document.getElementById('intro') as HTMLElement;
+  const html = document.documentElement;
+  const save = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} };
+
+  function finish() {
+    save('intro-seen', '1');
+    if (location.hash.startsWith('#intro')) history.replaceState(null, '', location.pathname);
+    root.classList.add('closing');
+    setTimeout(() => {
+      html.classList.remove('intro-pending');
+      root.remove();
+      window.dispatchEvent(new Event('page-ready'));
+    }, 450);
+  }
+
+  if (!html.classList.contains('intro-pending')) {
+    root.remove();
+  } else {
+    const p = JSON.parse(root.dataset.payload!) as Payload;
+    const steps = Object.fromEntries(
+      Array.from(root.querySelectorAll<HTMLElement>('[data-step]')).map((el) => [el.dataset.step!, el])
+    );
+    const logEl = root.querySelector<HTMLOListElement>('[data-log]')!;
+    const bar = root.querySelector<HTMLElement>('[data-bar]')!;
+    let current = '';
+    let done = false;
+    const end = () => { if (!done) { done = true; finish(); } };
+
+    function show(name: string) {
+      current = name;
+      for (const [k, el] of Object.entries(steps)) el.hidden = k !== name;
+      steps[name].querySelector<HTMLButtonElement>('.opt')?.focus();
+    }
+
+    function chooseLang(l: 'es' | 'en') {
+      save('lang', l);
+      if (l === p.lang) show('mode');
+      else location.href = p.otherPath + '#intro-mode';
+    }
+
+    function startAgents() {
+      show('run');
+      const step = 820; // ms entre líneas → ~10 s
+      p.log.forEach(([team, text], i) => {
+        setTimeout(() => {
+          if (done) return;
+          logEl.querySelector('li.active')?.classList.replace('active', 'ok');
+          const li = document.createElement('li');
+          li.className = 'active';
+          const tag = document.createElement('span');
+          tag.className = 'tag';
+          tag.textContent = `[${p.teams[team].name.toLowerCase()}] `;
+          li.append(tag, document.createTextNode(text));
+          logEl.append(li);
+          logEl.scrollTop = logEl.scrollHeight;
+          root.querySelectorAll('.team').forEach((el) => el.classList.remove('working'));
+          root.querySelector(`.team[data-team="${team}"]`)?.classList.add('working', 'used');
+          bar.style.width = `${((i + 1) / p.log.length) * 100}%`;
+        }, step * i + 300);
+      });
+      setTimeout(() => {
+        if (done) return;
+        logEl.querySelector('li.active')?.classList.replace('active', 'ok');
+        const li = document.createElement('li');
+        li.className = 'final';
+        li.textContent = p.done;
+        logEl.append(li);
+        root.querySelectorAll('.team').forEach((el) => el.classList.remove('working'));
+        setTimeout(end, 900);
+      }, step * p.log.length + 400);
+    }
+
+    root.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) =>
+      b.addEventListener('click', () => chooseLang(b.dataset.lang as 'es' | 'en'))
+    );
+    root.querySelectorAll<HTMLButtonElement>('[data-opt]').forEach((b) =>
+      b.addEventListener('click', () => (b.dataset.opt === 'agents' ? startAgents() : end()))
+    );
+    root.querySelector('[data-skip]')!.addEventListener('click', end);
+    document.addEventListener('keydown', (e) => {
+      if (done) return;
+      if (e.key === 'Escape') return end();
+      if (current === 'lang' && (e.key === '1' || e.key === '2')) chooseLang(e.key === '1' ? 'es' : 'en');
+      else if (current === 'mode' && e.key === '1') startAgents();
+      else if (current === 'mode' && e.key === '2') end();
+    });
+
+    show(html.dataset.introStep === 'mode' ? 'mode' : 'lang');
+  }
+</script>
+
+<style>
+  .intro { display: none; }
+  :global(html.intro-pending) .intro {
+    position: fixed; inset: 0; z-index: 100;
+    display: grid; place-items: center; padding: 16px;
+    background: radial-gradient(ellipse at top, #0f1a24 0%, var(--bg) 70%);
+    transition: opacity .45s ease;
+  }
+  :global(html.intro-pending) body { overflow: hidden; }
+  .intro.closing { opacity: 0; }
+
+  .term {
+    width: 100%; max-width: 760px;
+    background: #0a0e13; border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(62,224,168,.05);
+    font-family: var(--mono); font-size: 0.9rem; overflow: hidden;
+  }
+  .term-bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: #111821; border-bottom: 1px solid var(--border); }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .r { background: #ff5f57; } .y { background: #febc2e; } .g { background: #28c840; }
+  .term-title { margin-left: 8px; color: var(--muted); font-size: 0.8rem; flex: 1; }
+  .skip { font: inherit; font-size: 0.75rem; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+  .skip:hover { color: var(--text); border-color: var(--accent); }
+  kbd { font: inherit; opacity: .7; }
+
+  .term-body { padding: 22px 22px 24px; min-height: 340px; }
+  .term-body p { margin: 0 0 10px; }
+  .step { animation: in .3s ease; }
+  .pr { color: var(--accent); margin-right: 6px; }
+  .q { color: var(--text); margin-top: 18px !important; }
+  .opt {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    font: inherit; text-align: left; color: var(--text);
+    background: transparent; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; margin-top: 10px; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .opt:hover, .opt:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+  .k { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 5px; background: var(--surface-2); color: var(--accent); font-weight: 600; }
+  .hint { color: var(--muted); }
+
+  .teams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 16px; }
+  .team { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; transition: border-color .2s, background .2s; }
+  .team-name { color: var(--muted); font-size: 0.78rem; }
+  .agents { display: flex; gap: 4px; }
+  .agent { width: 8px; height: 8px; border-radius: 50%; background: #2a3746; transition: background .2s; }
+  .team.used .agent { background: rgba(62,224,168,.45); }
+  .team.working { border-color: var(--accent); background: var(--accent-soft); }
+  .team.working .team-name { color: var(--text); }
+  .team.working .agent { background: var(--accent); animation: pulse .8s ease-in-out infinite alternate; }
+  .team.working .agent:nth-child(2) { animation-delay: .2s; }
+  .team.working .agent:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { from { opacity: .35; } to { opacity: 1; } }
+
+  .log { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow: hidden; }
+  .log :global(li) { padding: 2px 0; color: #9fb0c4; animation: in .25s ease; }
+  .log :global(li.active) { color: var(--text); }
+  .log :global(li.active)::after { content: ' ▍'; color: var(--accent); animation: blink 1s steps(2) infinite; }
+  .log :global(li.ok)::after { content: ' ✓'; color: var(--accent); }
+  .log :global(li.final) { color: var(--accent); margin-top: 6px; }
+  .log :global(.tag) { color: var(--accent-2); }
+  @keyframes in { from { opacity: 0; transform: translateX(-4px); } }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .progress { height: 3px; background: var(--surface-2); border-radius: 3px; margin-top: 16px; overflow: hidden; }
+  .progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .5s ease; }
+
+  @media (max-width: 600px) {
+    .teams { grid-template-columns: repeat(2, 1fr); }
+    .term-body { padding: 16px; min-height: 380px; }
+    .term { font-size: 0.82rem; }
+  }
+</style>

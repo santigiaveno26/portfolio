@@ -1,0 +1,67 @@
+---
+// Animaciones de la página ya armada:
+//  · aparición escalonada de bloques al entrar en pantalla
+//  · contadores de las estadísticas
+//  · luz que sigue al mouse en las tarjetas (.spot)
+// Todo se desactiva con "reducir movimiento".
+---
+<script>
+  const html = document.documentElement;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function countUp(el: HTMLElement) {
+    const target = Number(el.dataset.count);
+    if (!target || reduced) return;
+    const dur = 1200;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur);
+      el.textContent = String(Math.round(target * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    el.textContent = '0';
+    requestAnimationFrame(step);
+  }
+
+  function reveal(el: HTMLElement) {
+    el.classList.add('built');
+    el.querySelectorAll<HTMLElement>('[data-count]').forEach(countUp);
+  }
+
+  function boot() {
+    const blocks = Array.from(document.querySelectorAll<HTMLElement>('.build-block'));
+    if (reduced || !('IntersectionObserver' in window)) return blocks.forEach((b) => b.classList.add('built'));
+
+    // Los bloques que ya están en pantalla aparecen en cascada; el resto, al scrollear.
+    let queue = 0;
+    let flushTimer = 0;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          io.unobserve(e.target);
+          const el = e.target as HTMLElement;
+          setTimeout(() => reveal(el), 90 * queue++);
+        }
+        clearTimeout(flushTimer);
+        flushTimer = window.setTimeout(() => (queue = 0), 120);
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+    );
+    blocks.forEach((b) => io.observe(b));
+  }
+
+  if (html.classList.contains('intro-pending')) addEventListener('page-ready', boot, { once: true });
+  else boot();
+
+  // Luz que sigue al cursor en tarjetas
+  if (!reduced && matchMedia('(hover: hover)').matches) {
+    document.addEventListener('pointermove', (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLElement>('.spot');
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    });
+  }
+</script>

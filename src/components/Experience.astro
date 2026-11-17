@@ -1,0 +1,55 @@
+---
+import { experience, profile, type Lang } from '../data/profile';
+import { ui } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang].about;
+---
+<section id="experiencia" class="alt">
+  <div class="container two-col">
+    <div class="build-block">
+      <p class="section-label">{t.label}</p>
+      <h2 class="section-title">{t.title}</h2>
+      {profile.about[lang].map((p) => <p class="about">{p}</p>)}
+    </div>
+
+    <ol class="timeline build-block" data-timeline>
+      {experience.map((e) => (
+        <li class={e.current ? 'current' : ''}>
+          <span class="period">{e.period[lang]}{e.current && <em>{t.current}</em>}</span>
+          <h3>{e.role[lang]}</h3>
+          <p class="company">{e.company[lang]}</p>
+          <p class="detail">{e.detail[lang]}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .alt { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+  .about { color: var(--muted); margin: 0 0 16px; }
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 22px; position: relative; }
+  /* La línea se "dibuja" de arriba hacia abajo cuando aparece */
+  .timeline::before {
+    content: ''; position: absolute; left: 0; top: 0; width: 2px; height: 100%;
+    background: linear-gradient(var(--accent), var(--border) 40%);
+    transform-origin: top; transform: scaleY(0); transition: transform 1.1s cubic-bezier(.2,.7,.2,1) .15s;
+  }
+  :global(.built).timeline::before, :global(html.reduced) .timeline::before { transform: scaleY(1); }
+  .timeline li { position: relative; padding: 0 0 30px; }
+  .timeline li:last-child { padding-bottom: 0; }
+  .timeline li::before {
+    content: ''; position: absolute; left: -27px; top: 6px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--bg-2); border: 2px solid var(--muted);
+  }
+  .timeline li.current::before { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .period { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .period em { font-style: normal; color: var(--accent); background: var(--accent-soft); padding: 1px 7px; border-radius: 999px; font-size: 0.7rem; }
+  h3 { margin: 6px 0 2px; font-size: 1.05rem; }
+  .company { margin: 0; color: var(--accent-2); font-size: 0.92rem; }
+  .detail { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
+  @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; gap: 36px; } }
+</style>

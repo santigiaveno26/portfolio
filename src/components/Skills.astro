@@ -1,0 +1,39 @@
+---
+import { skills, profile, type Lang } from '../data/profile';
+import { ui } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang].skills;
+---
+<section id="skills">
+  <div class="container">
+    <div class="build-block">
+      <p class="section-label">{t.label}</p>
+      <h2 class="section-title">{t.title}</h2>
+    </div>
+    <div class="grid">
+      {skills.map((s) => (
+        <div class="box spot build-block">
+          <h3>{s.group[lang]}</h3>
+          <div class="items">{s.items.map((i) => <span class="chip">{i}</span>)}</div>
+        </div>
+      ))}
+    </div>
+    <p class="langs build-block"><span>{t.languages}</span> {profile.languages[lang]}</p>
+  </div>
+</section>
+
+<style>
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: border-color .25s; }
+  .box:hover { border-color: rgba(62,224,168,.35); }
+  h3 { margin: 0 0 14px; font-size: 0.98rem; }
+  .items { display: flex; flex-wrap: wrap; gap: 7px; }
+  .items .chip { color: var(--text); transition: border-color .2s, color .2s; }
+  .items .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .langs { color: var(--muted); margin: 28px 0 0; }
+  .langs span { color: var(--text); font-weight: 600; }
+  @media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+</style>

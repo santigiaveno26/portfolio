@@ -1,0 +1,57 @@
+---
+import { profile, type Lang } from '../data/profile';
+import { ui, pathFor, otherLang } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = ui[lang];
+const links = [
+  { href: '#proyectos', label: t.nav.projects },
+  { href: '#experiencia', label: t.nav.experience },
+  { href: '#skills', label: t.nav.skills },
+  { href: '#contacto', label: t.nav.contact },
+];
+const other = otherLang(lang);
+---
+<header class="nav build-block">
+  <div class="container nav-inner">
+    <a href="#top" class="logo" aria-label={profile.name}>
+      <span class="logo-mark">SG</span>
+      <span class="logo-text">{profile.name}</span>
+    </a>
+    <nav aria-label="Secciones">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a class="lang" href={pathFor(other)} hreflang={other} data-setlang={other} aria-label={t.switchLangLabel}>{t.switchLang}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-setlang]').forEach((a) =>
+    a.addEventListener('click', () => { try { localStorage.setItem('lang', a.dataset.setlang!); } catch {} })
+  );
+</script>
+
+<style>
+  .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(10px); background: rgba(11, 15, 20, 0.75); border-bottom: 1px solid var(--border); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; }
+  .logo-mark {
+    display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent); font-family: var(--mono); font-size: 0.85rem;
+    border: 1px solid rgba(62,224,168,.3);
+  }
+  nav { display: flex; align-items: center; gap: 22px; }
+  nav a { text-decoration: none; color: var(--muted); font-size: 0.92rem; transition: color .15s; }
+  nav a:hover { color: var(--text); }
+  .lang {
+    font-family: var(--mono); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;
+    border: 1px solid var(--border); color: var(--text);
+  }
+  .lang:hover { border-color: var(--accent); color: var(--accent); }
+  @media (max-width: 640px) {
+    .logo-text { display: none; }
+    nav { gap: 12px; }
+    nav a { font-size: 0.82rem; }
+  }
+</style>

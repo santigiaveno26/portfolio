@@ -1,0 +1,65 @@
+---
+import '../styles/global.css';
+import { profile, type Lang } from '../data/profile';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const title = `${profile.name} · ${profile.role[lang]}`;
+const description = profile.tagline[lang];
+const site = Astro.site ?? new URL('http://localhost');
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={lang === 'es' ? 'es_AR' : 'en_US'} />
+    <meta name="theme-color" content="#0b0f14" />
+    <link rel="alternate" hreflang="es" href={new URL('/', site).href} />
+    <link rel="alternate" hreflang="en" href={new URL('/en/', site).href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <!--
+      Antes de pintar: 1) respeta el idioma elegido antes, 2) decide si mostrar
+      la intro y desde qué paso (idioma o modo), así no hay parpadeo.
+    -->
+    <script is:inline define:vars={{ pageLang: lang }}>
+      (function () {
+        var html = document.documentElement;
+        var store = {
+          get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+        };
+        var hash = location.hash;
+        var saved = store.get('lang');
+        // Si eligió inglés antes y entra a "/", lo llevamos a /en/
+        if (pageLang === 'es' && saved === 'en' && location.pathname === '/' && hash.indexOf('#intro') !== 0) {
+          location.replace('/en/' + hash);
+          return;
+        }
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var seen = store.get('intro-seen') === '1';
+        var step = null;
+        if (hash === '#intro') step = 'lang';
+        else if (hash === '#intro-mode') step = 'mode';
+        else if (!seen && !reduced) step = 'lang';
+        html.classList.add('js');
+        if (reduced) html.classList.add('reduced');
+        if (step) { html.classList.add('intro-pending'); html.dataset.introStep = step; }
+        else html.classList.add('no-intro');
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

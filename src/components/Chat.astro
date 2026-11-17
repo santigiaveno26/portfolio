@@ -1,0 +1,226 @@
+---
+import type { Lang } from '../data/profile';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = {
+  es: {
+    open: 'Preguntale a mi CV',
+    title: 'Preguntale a mi CV',
+    subtitle: 'Asistente con IA · responde sobre mi perfil',
+    hello: '¡Hola! Soy el asistente del portfolio. Preguntame lo que quieras sobre los proyectos, la experiencia o el stack de Santiago.',
+    placeholder: 'Escribí tu pregunta…',
+    send: 'Enviar',
+    close: 'Cerrar chat',
+    clear: 'Nueva conversación',
+    typing: 'pensando…',
+    error: 'No pude responder ahora. Probá de nuevo en un rato.',
+    note: 'Respuestas generadas a partir del portfolio. Puede equivocarse.',
+    suggestions: ['¿Qué hizo en la pasantía?', '¿Qué agentes de IA construyó?', '¿Con qué tecnologías trabaja?', '¿Está buscando trabajo?'],
+  },
+  en: {
+    open: 'Ask my CV',
+    title: 'Ask my CV',
+    subtitle: 'AI assistant · answers about my profile',
+    hello: "Hi! I'm the portfolio assistant. Ask me anything about Santiago's projects, experience or tech stack.",
+    placeholder: 'Type your question…',
+    send: 'Send',
+    close: 'Close chat',
+    clear: 'New conversation',
+    typing: 'thinking…',
+    error: "I couldn't answer right now. Please try again shortly.",
+    note: 'Answers are generated from the portfolio and may contain mistakes.',
+    suggestions: ['What did he do in his internship?', 'What AI agents has he built?', 'What tech does he use?', 'Is he open to job offers?'],
+  },
+}[lang];
+---
+<div class="chat" data-chat data-lang={lang} data-i18n={JSON.stringify(t)}>
+  <button class="fab" type="button" data-toggle aria-expanded="false" aria-controls="chat-panel">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4.6 3.5A.9.9 0 0 1 3 19.8V6a2 2 0 0 1 1-2Zm4 6.5a1.25 1.25 0 1 0 0 .01Zm4 0a1.25 1.25 0 1 0 0 .01Zm4 0a1.25 1.25 0 1 0 0 .01Z"/></svg>
+    <span class="fab-label">{t.open}</span>
+  </button>
+
+  <div id="chat-panel" class="panel" role="dialog" aria-label={t.title} hidden>
+    <header>
+      <div>
+        <strong>{t.title}</strong>
+        <small>{t.subtitle}</small>
+      </div>
+      <div class="hd-actions">
+        <button type="button" class="icon" data-clear title={t.clear} aria-label={t.clear}>↺</button>
+        <button type="button" class="icon" data-close title={t.close} aria-label={t.close}>✕</button>
+      </div>
+    </header>
+    <div class="msgs" data-msgs aria-live="polite"></div>
+    <div class="sugs" data-sugs>
+      {t.suggestions.map((s) => <button type="button" class="sug">{s}</button>)}
+    </div>
+    <form data-form>
+      <input name="q" type="text" maxlength="500" autocomplete="off" placeholder={t.placeholder} aria-label={t.placeholder} />
+      <button type="submit" aria-label={t.send}>➤</button>
+    </form>
+    <p class="note">{t.note}</p>
+  </div>
+</div>
+
+<script>
+  type Msg = { role: 'user' | 'bot'; text: string };
+  const root = document.querySelector<HTMLElement>('[data-chat]')!;
+  const t = JSON.parse(root.dataset.i18n!);
+  const lang = root.dataset.lang;
+  const panel = root.querySelector<HTMLElement>('.panel')!;
+  const toggle = root.querySelector<HTMLButtonElement>('[data-toggle]')!;
+  const msgsEl = root.querySelector<HTMLElement>('[data-msgs]')!;
+  const sugs = root.querySelector<HTMLElement>('[data-sugs]')!;
+  const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+  const input = form.querySelector<HTMLInputElement>('input')!;
+  const KEY = `chat-${lang}`;
+  let busy = false;
+
+  let history: Msg[] = [];
+  try { history = JSON.parse(sessionStorage.getItem(KEY) || '[]'); } catch {}
+  const persist = () => { try { sessionStorage.setItem(KEY, JSON.stringify(history.slice(-20))); } catch {} };
+
+  // Convierte URLs y emails en links sin usar innerHTML (seguro ante XSS).
+  function rich(text: string) {
+    const frag = document.createDocumentFragment();
+    const re = /(https?:\/\/[^\s)]+|[\w.+-]+@[\w-]+\.[\w.]+)/g;
+    let last = 0;
+    for (const m of text.matchAll(re)) {
+      frag.append(text.slice(last, m.index));
+      const a = document.createElement('a');
+      a.textContent = m[0];
+      a.href = m[0].includes('@') && !m[0].startsWith('http') ? `mailto:${m[0]}` : m[0];
+      a.target = '_blank'; a.rel = 'noopener';
+      frag.append(a);
+      last = m.index! + m[0].length;
+    }
+    frag.append(text.slice(last));
+    return frag;
+  }
+
+  function bubble(m: Msg | { role: 'bot'; text: string; typing?: boolean }) {
+    const div = document.createElement('div');
+    div.className = `msg ${m.role}${'typing' in m && m.typing ? ' typing' : ''}`;
+    div.append(rich(m.text));
+    msgsEl.append(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return div;
+  }
+
+  function render() {
+    msgsEl.replaceChildren();
+    bubble({ role: 'bot', text: t.hello });
+    history.forEach(bubble);
+    sugs.hidden = history.length > 0;
+  }
+
+  async function ask(q: string) {
+    q = q.trim();
+    if (!q || busy) return;
+    busy = true;
+    sugs.hidden = true;
+    const prev = history.map((h) => ({ role: h.role === 'user' ? 'user' : 'model', text: h.text }));
+    const userMsg: Msg = { role: 'user', text: q };
+    history.push(userMsg);
+    bubble(userMsg);
+    const wait = bubble({ role: 'bot', text: t.typing, typing: true });
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ message: q, history: prev, lang }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      wait.remove();
+      const botMsg: Msg = { role: 'bot', text: data.reply || t.error };
+      history.push(botMsg);
+      bubble(botMsg);
+    } catch {
+      wait.remove();
+      bubble({ role: 'bot', text: t.error });
+    } finally {
+      busy = false;
+      persist();
+    }
+  }
+
+  function setOpen(open: boolean) {
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    root.classList.toggle('open', open);
+    if (open) { render(); setTimeout(() => input.focus(), 50); }
+    else toggle.focus();
+  }
+
+  toggle.addEventListener('click', () => setOpen(panel.hidden));
+  root.querySelector('[data-close]')!.addEventListener('click', () => setOpen(false));
+  root.querySelector('[data-clear]')!.addEventListener('click', () => { history = []; persist(); render(); input.focus(); });
+  sugs.querySelectorAll<HTMLButtonElement>('.sug').forEach((b) => b.addEventListener('click', () => ask(b.textContent || '')));
+  form.addEventListener('submit', (e) => { e.preventDefault(); const q = input.value; input.value = ''; ask(q); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) setOpen(false); });
+
+  // Aparece discretamente cuando la página ya está armada.
+  const show = () => setTimeout(() => root.classList.add('ready'), 1200);
+  if (document.documentElement.classList.contains('intro-pending')) addEventListener('page-ready', show, { once: true });
+  else show();
+</script>
+
+<style>
+  .chat { position: fixed; right: 20px; bottom: 20px; z-index: 50; display: flex; flex-direction: column; align-items: flex-end; gap: 12px;
+    opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .5s ease, transform .5s ease; }
+  .chat.ready { opacity: 1; transform: none; pointer-events: auto; }
+
+  .fab {
+    order: 2; display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 999px; cursor: pointer;
+    font: 600 0.85rem var(--font); color: var(--text);
+    background: rgba(20, 28, 38, .92); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    transition: border-color .2s, transform .2s;
+  }
+  .fab svg { color: var(--accent); }
+  .fab:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .open .fab { border-color: var(--accent); }
+
+  .panel {
+    order: 1; width: min(370px, calc(100vw - 40px)); height: min(520px, calc(100vh - 110px));
+    display: flex; flex-direction: column; overflow: hidden;
+    background: #0e141b; border: 1px solid var(--border); border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.55); animation: pop .22s ease;
+  }
+  .panel[hidden] { display: none; }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+
+  header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); background: #111821; }
+  header strong { display: block; font-size: 0.95rem; }
+  header small { color: var(--muted); font-size: 0.75rem; }
+  .hd-actions { display: flex; gap: 4px; }
+  .icon { width: 30px; height: 30px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.95rem; }
+  .icon:hover { color: var(--text); border-color: var(--border); }
+
+  .msgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .msgs :global(.msg) { max-width: 88%; padding: 9px 12px; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+  .msgs :global(.msg.bot) { background: var(--surface); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msgs :global(.msg.user) { background: var(--accent-soft); border: 1px solid rgba(62,224,168,.3); align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msgs :global(.msg.typing) { color: var(--muted); font-style: italic; }
+  .msgs :global(.msg a) { color: var(--accent); }
+
+  .sugs { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+  .sugs[hidden] { display: none; }
+  .sug { font: 0.78rem var(--font); color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+  .sug:hover { color: var(--accent); border-color: var(--accent); }
+
+  form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+  input { flex: 1; min-width: 0; font: 0.9rem var(--font); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
+  input:focus { outline: none; border-color: var(--accent); }
+  form button { width: 40px; border-radius: 10px; border: 0; background: var(--accent); color: #04120c; cursor: pointer; font-size: 0.95rem; }
+  .note { margin: 0; padding: 0 14px 10px; color: var(--muted); font-size: 0.7rem; }
+
+  @media (max-width: 560px) {
+    .chat { right: 14px; bottom: 14px; }
+    .fab-label { display: none; }
+    .fab { padding: 12px; }
+  }
+</style>
