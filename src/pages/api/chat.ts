@@ -74,27 +74,43 @@ async function askGemini(key: string, lang: Lang, history: { role: string; text:
     { role: 'user', parts: [{ text: message }] },
   ];
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15_000);
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const timer = setTimeout(() => ctrl.abort(), 20_000);
+  const call = (noThinking: boolean) =>
+    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt(lang) }] },
         contents,
-        generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 500,
+          // Sin "razonamiento" previo: respuestas cortas y rápidas.
+          ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
       }),
       signal: ctrl.signal,
     });
-    if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  try {
+    let res = await call(thinkingOff);
+    // Si el modelo no acepta desactivar el razonamiento, reintenta sin ese ajuste y lo recuerda.
+    if (res.status === 400 && thinkingOff) {
+      thinkingOff = false;
+      res = await call(false);
+    }
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const data = await res.json();
-    const text: string | undefined = data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('');
-    if (!text?.trim()) throw new Error('empty');
+    const text: string | undefined = data?.candidates?.[0]?.content?.parts
+      ?.filter((p: any) => !p.thought)
+      .map((p: any) => p.text ?? '')
+      .join('');
+    if (!text?.trim()) throw new Error(`empty (finishReason: ${data?.candidates?.[0]?.finishReason ?? 'n/a'})`);
     return text.trim();
   } finally {
     clearTimeout(timer);
   }
 }
+let thinkingOff = true;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
