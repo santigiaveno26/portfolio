@@ -151,8 +151,11 @@ export const POST: APIRoute = async (ctx) => {
         ...history.filter((h) => typeof h?.text === 'string').map((h) => ({ role: (h.role === 'user' ? 'user' : 'model') as 'user' | 'model', parts: [{ text: String(h.text).slice(0, 800) }] })),
         { role: 'user', parts: [{ text: message }] },
       ];
+      const started = Date.now();
       for (let step = 0; step < MAX_STEPS; step++) {
-        const res = await geminiGenerate({ system: systemPrompt(lang, state), contents, tools: TOOLS, maxOutputTokens: 400 });
+        const left = 28_000 - (Date.now() - started); // presupuesto total por mensaje
+        if (left < 3_000) throw new Error('timeout total');
+        const res = await geminiGenerate({ system: systemPrompt(lang, state), contents, tools: TOOLS, maxOutputTokens: 400, timeoutMs: left });
         const calls = res.parts.filter((p) => p.functionCall);
         if (!calls.length) { reply = textOf(res); break; }
         contents.push(res); // se devuelve intacto: Gemini exige recibir de vuelta sus "thought signatures"

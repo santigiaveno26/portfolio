@@ -29,7 +29,8 @@ export const stem = (w: string) => w.replace(/(es|s)$/, '');
 export type GeminiPart = { text?: string; thought?: boolean; functionCall?: { name: string; args?: any; id?: string }; [k: string]: any };
 export type GeminiContent = { role: 'user' | 'model'; parts: GeminiPart[] };
 
-let thinkingOff = true; // si el modelo no acepta desactivar el razonamiento, se recuerda y no se vuelve a pedir
+// Por modelo: si no acepta desactivar el razonamiento, se recuerda y no se vuelve a pedir.
+const thinkingOff = new Map<string, boolean>();
 
 /** Una llamada a generateContent. Devuelve el contenido del primer candidato (texto y/o llamadas a funciones). */
 export async function geminiGenerate(opts: {
@@ -41,40 +42,62 @@ export async function geminiGenerate(opts: {
 }): Promise<GeminiContent> {
   const key = env('GEMINI_API_KEY');
   if (!key) throw new Error('no_key');
-  const model = env('GEMINI_MODEL') || 'gemini-flash-lite-latest';
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 20_000);
-  const call = (noThinking: boolean) =>
-    fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: opts.system }] },
-        contents: opts.contents,
-        ...(opts.tools ? { tools: [{ functionDeclarations: opts.tools }] } : {}),
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: opts.maxOutputTokens ?? 500,
-          ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-        },
-      }),
-      signal: ctrl.signal,
-    });
-  try {
-    let res = await call(thinkingOff);
-    // Si el modelo no acepta desactivar el razonamiento, reintenta sin ese ajuste y lo recuerda.
-    if (res.status === 400 && thinkingOff) {
-      thinkingOff = false;
-      res = await call(false);
+  // Cascada de modelos: si uno está saturado (503), sin cuota (429), retirado (404) o tarda, se prueba el siguiente.
+  const models = [env('GEMINI_MODEL') || 'gemini-flash-lite-latest', ...(env('GEMINI_FALLBACK_MODELS') || 'gemini-flash-latest').split(',')]
+    .map((m) => m.trim())
+    .filter((m, i, a) => m && a.indexOf(m) === i);
+  const deadline = Date.now() + (opts.timeoutMs ?? 22_000);
+  let lastErr: Error = new Error('sin modelos');
+
+  for (const model of models) {
+    const left = deadline - Date.now();
+    if (left < 2_000) break;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), Math.min(left, 12_000));
+    const call = (noThinking: boolean) =>
+      fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: opts.system }] },
+          contents: opts.contents,
+          ...(opts.tools ? { tools: [{ functionDeclarations: opts.tools }] } : {}),
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: opts.maxOutputTokens ?? 500,
+            ...(noThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          },
+        }),
+        signal: ctrl.signal,
+      });
+    try {
+      const off = thinkingOff.get(model) ?? true;
+      let res = await call(off);
+      // Si el modelo no acepta desactivar el razonamiento, reintenta sin ese ajuste y lo recuerda.
+      if (res.status === 400 && off) {
+        thinkingOff.set(model, false);
+        res = await call(false);
+      }
+      if (!res.ok) {
+        const body = (await res.text()).slice(0, 300);
+        console.error(`[gemini] ${model} respondió ${res.status}: ${body}`);
+        lastErr = new Error(`Gemini ${res.status} (${model})`);
+        if ([404, 429, 500, 502, 503, 504].includes(res.status)) continue;
+        throw lastErr;
+      }
+      const data = await res.json();
+      const content = data?.candidates?.[0]?.content as GeminiContent | undefined;
+      if (!content?.parts?.length) throw new Error(`empty (finishReason: ${data?.candidates?.[0]?.finishReason ?? 'n/a'})`);
+      return { role: 'model', parts: content.parts };
+    } catch (err) {
+      lastErr = (err as Error).name === 'AbortError' ? new Error(`timeout (${model})`) : (err as Error);
+      if ((err as Error).name === 'AbortError') continue;
+      throw lastErr;
+    } finally {
+      clearTimeout(timer);
     }
-    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const data = await res.json();
-    const content = data?.candidates?.[0]?.content as GeminiContent | undefined;
-    if (!content?.parts?.length) throw new Error(`empty (finishReason: ${data?.candidates?.[0]?.finishReason ?? 'n/a'})`);
-    return { role: 'model', parts: content.parts };
-  } finally {
-    clearTimeout(timer);
   }
+  throw lastErr;
 }
 
 export const textOf = (c: GeminiContent) =>
