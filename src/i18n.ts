@@ -79,5 +79,47 @@ export const ui = {
   },
 } as const;
 
+// Textos de las páginas de caso y de la demo
+export const caseUi = {
+  es: {
+    back: '← Volver a proyectos',
+    seeCase: 'Ver caso completo',
+    tryDemo: 'Probar la demo',
+    role: 'Mi rol',
+    context: 'Contexto',
+    problem: 'El problema',
+    solution: 'La solución',
+    architecture: 'Arquitectura',
+    decisions: 'Decisiones técnicas',
+    results: 'Resultados',
+    stack: 'Tecnologías',
+    repo: 'Ver el código en GitHub',
+    demoCta: 'Probalo vos: demo en vivo con una empresa ficticia',
+    next: 'Siguiente proyecto',
+    hireTitle: '¿Te sirve este perfil para tu equipo?',
+    hireText: 'Estoy buscando sumarme a una empresa. Podés escribirme o descargar mi CV.',
+  },
+  en: {
+    back: '← Back to projects',
+    seeCase: 'Read the full case',
+    tryDemo: 'Try the demo',
+    role: 'My role',
+    context: 'Context',
+    problem: 'The problem',
+    solution: 'The solution',
+    architecture: 'Architecture',
+    decisions: 'Technical decisions',
+    results: 'Results',
+    stack: 'Tech stack',
+    repo: 'See the code on GitHub',
+    demoCta: 'Try it yourself: live demo with a fictional company',
+    next: 'Next project',
+    hireTitle: 'Is this profile a fit for your team?',
+    hireText: "I'm looking to join a company. Write to me or download my CV.",
+  },
+} as const;
+
 export const pathFor = (lang: Lang) => (lang === 'es' ? '/' : '/en/');
 export const otherLang = (lang: Lang): Lang => (lang === 'es' ? 'en' : 'es');
+export const casePath = (lang: Lang, slug: string) => (lang === 'es' ? `/proyectos/${slug}/` : `/en/projects/${slug}/`);
+export const demoPath = (lang: Lang) => (lang === 'es' ? '/demo/agente/' : '/en/demo/agent/');

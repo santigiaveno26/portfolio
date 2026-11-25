@@ -2,26 +2,32 @@
 import { profile, type Lang } from '../data/profile';
 import { ui, pathFor, otherLang } from '../i18n';
 
-interface Props { lang: Lang }
-const { lang } = Astro.props;
+interface Props {
+  lang: Lang;
+  home?: boolean; // en la home los links son anclas; en otras páginas apuntan a la home
+  altHref?: string; // esta misma página en el otro idioma
+}
+const { lang, home = true } = Astro.props;
 const t = ui[lang];
+const base = home ? '' : pathFor(lang);
 const links = [
-  { href: '#proyectos', label: t.nav.projects },
-  { href: '#experiencia', label: t.nav.experience },
-  { href: '#skills', label: t.nav.skills },
-  { href: '#contacto', label: t.nav.contact },
+  { href: `${base}#proyectos`, label: t.nav.projects },
+  { href: `${base}#experiencia`, label: t.nav.experience },
+  { href: `${base}#skills`, label: t.nav.skills },
+  { href: `${base}#contacto`, label: t.nav.contact },
 ];
 const other = otherLang(lang);
+const altHref = Astro.props.altHref ?? pathFor(other);
 ---
 <header class="nav build-block">
   <div class="container nav-inner">
-    <a href="#top" class="logo" aria-label={profile.name}>
+    <a href={home ? '#top' : pathFor(lang)} class="logo" aria-label={profile.name}>
       <span class="logo-mark">SG</span>
       <span class="logo-text">{profile.name}</span>
     </a>
     <nav aria-label="Secciones">
       {links.map((l) => <a href={l.href}>{l.label}</a>)}
-      <a class="lang" href={pathFor(other)} hreflang={other} data-setlang={other} aria-label={t.switchLangLabel}>{t.switchLang}</a>
+      <a class="lang" href={altHref} hreflang={other} data-setlang={other} aria-label={t.switchLangLabel}>{t.switchLang}</a>
     </nav>
   </div>
 </header>

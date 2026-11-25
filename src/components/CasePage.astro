@@ -1,0 +1,173 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import Diagram from './Diagram.astro';
+import Chat from './Chat.astro';
+import Motion from './Motion.astro';
+import { cases, type Case } from '../data/cases';
+import { projects, kindLabel, profile, type Lang } from '../data/profile';
+import { caseUi, casePath, otherLang, pathFor } from '../i18n';
+
+interface Props { lang: Lang; c: Case }
+const { lang, c } = Astro.props;
+const t = caseUi[lang];
+const p = projects.find((x) => x.slug === c.slug)!;
+const idx = cases.findIndex((x) => x.slug === c.slug);
+const next = cases[(idx + 1) % cases.length];
+const nextProject = projects.find((x) => x.slug === next.slug)!;
+const other = otherLang(lang);
+const mailJob = `mailto:${profile.contact.email}?subject=${encodeURIComponent(lang === 'es' ? 'Oportunidad laboral' : 'Job opportunity')}`;
+---
+<Base
+  lang={lang}
+  title={`${p.title[lang]} · ${profile.name}`}
+  description={c.tagline[lang]}
+  alternates={{ es: casePath('es', c.slug), en: casePath('en', c.slug) }}
+>
+  <Nav lang={lang} home={false} altHref={casePath(other, c.slug)} />
+  <main>
+    <header class="case-hero">
+      <div class="container">
+        <a class="back build-block" href={`${pathFor(lang)}#proyectos`}>{t.back}</a>
+        <div class="tags build-block">
+          <span class={`kind kind-${p.kind}`}>{kindLabel[p.kind][lang]}</span>
+          {p.status && <span class="status"><i></i>{p.status[lang]}</span>}
+        </div>
+        <h1 class="build-block">{p.title[lang]}</h1>
+        <p class="tagline build-block">{c.tagline[lang]}</p>
+        <div class="actions build-block">
+          {c.links?.demo && <a class="btn btn-primary" href={c.links.demo[lang]}>▶ {t.demoCta}</a>}
+          {c.links?.repo && <a class="btn" href={c.links.repo} target="_blank" rel="noopener">{t.repo} ↗</a>}
+        </div>
+        <dl class="meta build-block">
+          <div><dt>{t.context}</dt><dd>{c.context[lang]}</dd></div>
+          <div><dt>{t.role}</dt><dd>{c.role[lang]}</dd></div>
+          <div><dt>{t.stack}</dt><dd class="chips">{p.stack.map((s) => <span class="chip">{s}</span>)}</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="block">
+      <div class="container narrow">
+        <div class="build-block">
+          <p class="section-label">01 · {t.problem}</p>
+          {c.problem[lang].map((x) => <p class="lead">{x}</p>)}
+        </div>
+        <div class="build-block">
+          <p class="section-label">02 · {t.solution}</p>
+          {c.solution[lang].map((x) => <p class="lead">{x}</p>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="container">
+        <p class="section-label build-block">03 · {t.architecture}</p>
+        <div class="build-block"><Diagram lang={lang} flow={c.flow} /></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="container">
+        <p class="section-label build-block">04 · {t.decisions}</p>
+        <div class="decisions">
+          {c.decisions.map((d, i) => (
+            <article class="decision spot build-block">
+              <span class="num">{String(i + 1).padStart(2, '0')}</span>
+              <h3>{d.title[lang]}</h3>
+              <p>{d.text[lang]}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="container narrow">
+        <div class="build-block">
+          <p class="section-label">05 · {t.results}</p>
+          <ul class="results">{c.results[lang].map((r) => <li>{r}</li>)}</ul>
+          {c.confidential && <p class="note">🔒 {c.confidential[lang]}</p>}
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="container">
+        <div class="end build-block">
+          <div class="hire">
+            <h2>{t.hireTitle}</h2>
+            <p>{t.hireText}</p>
+            <div class="actions">
+              <a class="btn btn-primary" href={mailJob}>{profile.contact.email}</a>
+              <a class="btn" href={profile.cvs[lang]} download>{lang === 'es' ? 'Descargar CV' : 'Download CV'}</a>
+            </div>
+          </div>
+          <a class="next spot" href={casePath(lang, next.slug)}>
+            <small>{t.next} →</small>
+            <strong>{nextProject.title[lang]}</strong>
+            <span>{nextProject.client[lang]}</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="container">© {new Date().getFullYear()} {profile.name}</div></footer>
+  <Chat lang={lang} />
+  <Motion />
+</Base>
+
+<style>
+  .case-hero { padding: 56px 0 30px; position: relative; }
+  .case-hero::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(700px 300px at 20% 0%, rgba(62,224,168,.09), transparent 70%);
+  }
+  .back { display: inline-block; color: var(--muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 22px; }
+  .back:hover { color: var(--accent); }
+  .tags { display: flex; gap: 10px; align-items: center; }
+  .kind { font-family: var(--mono); font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); }
+  .kind-client { color: var(--accent); background: var(--accent-soft); }
+  .kind-internship { color: var(--accent-2); background: rgba(90,169,255,.12); }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); }
+  .status i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); line-height: 1.1; letter-spacing: -0.02em; margin: 16px 0 14px; max-width: 860px; }
+  .tagline { color: var(--muted); font-size: 1.12rem; max-width: 760px; margin: 0 0 24px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 14px; margin: 34px 0 0; }
+  .meta div { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  dt { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  dd { margin: 0; font-size: 0.92rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .block { padding: 38px 0; }
+  .narrow { max-width: 820px; }
+  .lead { font-size: 1.05rem; color: #c9d4e0; margin: 0 0 14px; }
+  .narrow > div + div { margin-top: 30px; }
+
+  .decisions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .decision { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .num { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+  .decision h3 { margin: 8px 0 8px; font-size: 1.05rem; line-height: 1.3; }
+  .decision p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+
+  .results { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .results li { position: relative; padding: 12px 14px 12px 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .results li::before { content: '✓'; position: absolute; left: 14px; top: 11px; color: var(--accent); font-weight: 700; }
+  .note { color: var(--muted); font-size: 0.88rem; margin: 16px 0 0; }
+
+  .end { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; }
+  .hire { background: linear-gradient(135deg, rgba(62,224,168,.08), rgba(90,169,255,.06)); border: 1px solid var(--border); border-radius: 18px; padding: 30px; }
+  .hire h2 { margin: 0 0 8px; font-size: 1.4rem; }
+  .hire p { margin: 0 0 18px; color: var(--muted); }
+  .next { display: flex; flex-direction: column; justify-content: center; gap: 6px; text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; transition: border-color .2s, transform .2s; }
+  .next:hover { border-color: rgba(62,224,168,.45); transform: translateY(-2px); }
+  .next small { font-family: var(--mono); color: var(--accent); font-size: 0.78rem; }
+  .next strong { font-size: 1.1rem; }
+  .next span { color: var(--muted); font-size: 0.85rem; }
+  .footer { border-top: 1px solid var(--border); padding: 26px 0 90px; color: var(--muted); font-size: 0.85rem; margin-top: 30px; }
+
+  @media (max-width: 860px) {
+    .meta, .decisions, .end { grid-template-columns: 1fr; }
+  }
+</style>

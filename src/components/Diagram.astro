@@ -1,0 +1,66 @@
+---
+import type { Node } from '../data/cases';
+import type { Lang } from '../data/profile';
+
+interface Props { lang: Lang; flow: Node[][] }
+const { lang, flow } = Astro.props;
+---
+<div class="diagram" role="img" aria-label={flow.map((col) => col.map((n) => n.label[lang]).join(' + ')).join(' → ')}>
+  {flow.map((col, i) => (
+    <>
+      {i > 0 && <div class="arrow" aria-hidden="true"><span></span></div>}
+      <div class="col">
+        {col.map((node) => (
+          <div class={`node ${node.accent ? 'accent' : ''}`}>
+            <strong>{node.label[lang]}</strong>
+            {node.sub && <small>{node.sub[lang]}</small>}
+          </div>
+        ))}
+      </div>
+    </>
+  ))}
+</div>
+
+<style>
+  .diagram {
+    display: flex; align-items: stretch; gap: 0;
+    padding: 26px 22px; border: 1px solid var(--border); border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 1px 1px, rgba(139,155,176,.12) 1px, transparent 0) 0 0 / 18px 18px,
+      #0a0e13;
+    overflow-x: auto;
+  }
+  .col { display: flex; flex-direction: column; justify-content: center; gap: 10px; flex: 1 1 0; min-width: 120px; }
+  .node {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; text-align: center;
+  }
+  .node strong { display: block; font-size: 0.86rem; line-height: 1.25; }
+  .node small { display: block; margin-top: 3px; color: var(--muted); font-size: 0.72rem; line-height: 1.35; font-family: var(--mono); }
+  .node.accent { border-color: rgba(62,224,168,.55); background: linear-gradient(160deg, rgba(62,224,168,.12), var(--surface)); box-shadow: 0 0 18px rgba(62,224,168,.08); }
+  .node.accent strong { color: var(--accent); }
+
+  .arrow { flex: 0 0 34px; display: grid; place-items: center; }
+  .arrow span {
+    position: relative; width: 100%; height: 2px;
+    background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 11px);
+    background-size: 22px 2px; opacity: .7;
+    animation: flow 1.2s linear infinite;
+  }
+  .arrow span::after {
+    content: ''; position: absolute; right: -2px; top: -4px;
+    border-left: 7px solid var(--accent); border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  }
+  @keyframes flow { to { background-position: 22px 0; } }
+
+  @media (max-width: 760px) {
+    .diagram { flex-direction: column; padding: 20px 16px; }
+    .col { flex-direction: row; flex-wrap: wrap; justify-content: center; min-width: 0; }
+    .col .node { flex: 1 1 140px; }
+    .arrow { flex: 0 0 28px; }
+    .arrow span { width: 2px; height: 100%; min-height: 22px; background: repeating-linear-gradient(180deg, var(--accent) 0 6px, transparent 6px 11px); background-size: 2px 22px; animation-name: flowv; }
+    .arrow span::after { right: -4px; top: auto; bottom: -2px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid var(--accent); border-bottom: 0; }
+    @keyframes flowv { to { background-position: 0 22px; } }
+  }
+  @media (prefers-reduced-motion: reduce) { .arrow span { animation: none; } }
+</style>

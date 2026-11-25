@@ -98,6 +98,8 @@ export const kindLabel: Record<Kind, L> = {
 };
 
 export type Project = {
+  slug: string; // página del caso: /proyectos/<slug> (contenido en data/cases.ts)
+  demo?: boolean; // tiene demo en vivo
   title: L;
   client: L;
   kind: Kind;
@@ -111,6 +113,8 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    slug: 'agente-whatsapp-rag',
+    demo: true,
     title: { es: 'Agente de WhatsApp con Agentic RAG', en: 'WhatsApp agent with Agentic RAG' },
     client: { es: 'Empresa metalúrgica · fabricante de maquinaria', en: 'Metalworking company · machinery manufacturer' },
     kind: 'client',
@@ -137,6 +141,7 @@ export const projects: Project[] = [
     stack: ['Python', 'FastAPI', 'LangChain', 'ChromaDB', 'Docker', 'Caddy', 'WhatsApp Cloud API'],
   },
   {
+    slug: 'dandia-demanda',
     title: { es: 'DandIA + modelo de demanda de materiales', en: 'DandIA + material demand model' },
     client: { es: 'Danda SRL · cocinas industriales', en: 'Danda SRL · industrial kitchen manufacturer' },
     kind: 'internship',
@@ -163,6 +168,7 @@ export const projects: Project[] = [
     stack: ['Python', 'PostgreSQL', 'Streamlit', 'scikit-learn', 'Gemini', 'Plotly'],
   },
   {
+    slug: 'ecommerce-chatbot',
     title: { es: 'Tienda e-commerce con chatbot integrado', en: 'E-commerce store with built-in chatbot' },
     client: { es: 'Comercio minorista · tienda online', en: 'Retail business · online store' },
     kind: 'client',
@@ -187,6 +193,7 @@ export const projects: Project[] = [
     stack: ['WooCommerce', 'FastAPI', 'Gemini', 'JavaScript'],
   },
   {
+    slug: 'programador-whatsapp',
     title: { es: 'Programador de mensajes de WhatsApp', en: 'WhatsApp message scheduler' },
     client: { es: 'Cliente real · uso diario', en: 'Real client · daily use' },
     kind: 'client',
@@ -202,6 +209,7 @@ export const projects: Project[] = [
     stack: ['Python', 'Playwright', 'Streamlit'],
   },
   {
+    slug: 'vision-por-computadora',
     title: { es: 'Pipeline de visión por computadora en tiempo real', en: 'Real-time computer vision pipeline' },
     client: { es: 'Proyecto personal', en: 'Personal project' },
     kind: 'personal',
@@ -214,9 +222,10 @@ export const projects: Project[] = [
       en: ['Fine-tuned ResNet18 with data augmentation', 'Similarity search with ResNet50 embeddings + FAISS', 'Optimized with ONNX (layer fusion, FP16/INT8)'],
     },
     stack: ['PyTorch', 'YOLO11', 'ONNX', 'FAISS', 'OpenCV'],
-    link: { label: { es: 'GitHub', en: 'GitHub' }, href: 'https://github.com/santigiaveno26' },
+    link: { label: { es: 'Código en GitHub', en: 'Code on GitHub' }, href: 'https://github.com/santigiaveno26/ProyectoYolo-Resnet' },
   },
   {
+    slug: 'data-warehouse-bi',
     title: { es: 'Data Warehouse y BI para una distribuidora', en: 'Data warehouse & BI for a distributor' },
     client: { es: 'Bases de Datos II · UNR', en: 'Databases II course · UNR' },
     kind: 'academic',

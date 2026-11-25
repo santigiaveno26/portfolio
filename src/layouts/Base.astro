@@ -2,10 +2,16 @@
 import '../styles/global.css';
 import { profile, type Lang } from '../data/profile';
 
-interface Props { lang: Lang }
-const { lang } = Astro.props;
-const title = `${profile.name} · ${profile.role[lang]}`;
-const description = profile.tagline[lang];
+interface Props {
+  lang: Lang;
+  intro?: boolean; // solo la página principal muestra la intro de los agentes
+  title?: string;
+  description?: string;
+  alternates?: { es: string; en: string }; // la misma página en cada idioma
+}
+const { lang, intro = false, alternates = { es: '/', en: '/en/' } } = Astro.props;
+const title = Astro.props.title ?? `${profile.name} · ${profile.role[lang]}`;
+const description = Astro.props.description ?? profile.tagline[lang];
 const site = Astro.site ?? new URL('http://localhost');
 ---
 <!doctype html>
@@ -20,8 +26,8 @@ const site = Astro.site ?? new URL('http://localhost');
     <meta property="og:type" content="website" />
     <meta property="og:locale" content={lang === 'es' ? 'es_AR' : 'en_US'} />
     <meta name="theme-color" content="#0b0f14" />
-    <link rel="alternate" hreflang="es" href={new URL('/', site).href} />
-    <link rel="alternate" hreflang="en" href={new URL('/en/', site).href} />
+    <link rel="alternate" hreflang="es" href={new URL(alternates.es, site).href} />
+    <link rel="alternate" hreflang="en" href={new URL(alternates.en, site).href} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,7 +39,7 @@ const site = Astro.site ?? new URL('http://localhost');
       Antes de pintar: 1) respeta el idioma elegido antes, 2) decide si mostrar
       la intro y desde qué paso (idioma o modo), así no hay parpadeo.
     -->
-    <script is:inline define:vars={{ pageLang: lang }}>
+    <script is:inline define:vars={{ pageLang: lang, useIntro: intro }}>
       (function () {
         var html = document.documentElement;
         var store = {
@@ -49,7 +55,8 @@ const site = Astro.site ?? new URL('http://localhost');
         var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         var seen = store.get('intro-seen') === '1';
         var step = null;
-        if (hash === '#intro') step = 'lang';
+        if (!useIntro) step = null;
+        else if (hash === '#intro') step = 'lang';
         else if (hash === '#intro-mode') step = 'mode';
         else if (!seen && !reduced) step = 'lang';
         html.classList.add('js');
