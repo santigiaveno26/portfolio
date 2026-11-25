@@ -144,6 +144,7 @@ export const POST: APIRoute = async (ctx) => {
 
   let reply = '';
   let source: 'ai' | 'offline' = 'offline';
+  let reason = 'no_key';
   if (env('GEMINI_API_KEY')) {
     try {
       const contents: GeminiContent[] = [
@@ -163,7 +164,8 @@ export const POST: APIRoute = async (ctx) => {
       if (!reply) throw new Error('sin respuesta final');
       source = 'ai';
     } catch (err) {
-      console.error('[demo-agent] Gemini falló, uso modo sin IA:', (err as Error).message);
+      reason = (err as Error).message.slice(0, 160);
+      console.error('[demo-agent] Gemini falló, uso modo sin IA:', reason);
       trace.length = 0;
     }
   }
@@ -184,5 +186,5 @@ export const POST: APIRoute = async (ctx) => {
       : "\n\nSince I can't help you with this, I'm handing you over to someone from the team.";
   }
 
-  return json({ reply, trace, owner: state.owner, failStreak: state.failStreak, escalated, source });
+  return json({ reply, trace, owner: state.owner, failStreak: state.failStreak, escalated, source, ...(source === 'offline' ? { reason } : {}) });
 };

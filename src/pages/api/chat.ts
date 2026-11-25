@@ -66,6 +66,7 @@ export const POST: APIRoute = async (ctx) => {
     return json({ reply: lang === 'es' ? 'Llegaste al límite de preguntas por ahora. Probá en unos minutos o escribile a ' + profile.contact.email : 'You hit the question limit for now. Try again in a few minutes or email ' + profile.contact.email, source: 'limit' });
   }
 
+  let reason = 'no_key';
   if (env('GEMINI_API_KEY')) {
     try {
       const contents: GeminiContent[] = [
@@ -76,8 +77,9 @@ export const POST: APIRoute = async (ctx) => {
       if (reply) return json({ reply, source: 'ai' });
       throw new Error('empty text');
     } catch (err) {
-      console.error('[chat] Gemini falló, uso respuesta offline:', (err as Error).message);
+      reason = (err as Error).message.slice(0, 160);
+      console.error('[chat] Gemini falló, uso respuesta offline:', reason);
     }
   }
-  return json({ reply: offlineAnswer(message, lang), source: 'offline' });
+  return json({ reply: offlineAnswer(message, lang), source: 'offline', reason });
 };
