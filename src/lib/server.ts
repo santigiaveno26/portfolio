@@ -53,7 +53,7 @@ export async function geminiGenerate(opts: {
     const left = deadline - Date.now();
     if (left < 2_000) break;
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), Math.min(left, 12_000));
+    const timer = setTimeout(() => ctrl.abort(), Math.min(left, 8_000));
     const call = (noThinking: boolean) =>
       fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',

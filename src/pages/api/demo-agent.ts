@@ -153,7 +153,7 @@ export const POST: APIRoute = async (ctx) => {
       ];
       const started = Date.now();
       for (let step = 0; step < MAX_STEPS; step++) {
-        const left = 28_000 - (Date.now() - started); // presupuesto total por mensaje
+        const left = 18_000 - (Date.now() - started); // presupuesto total por mensaje
         if (left < 3_000) throw new Error('timeout total');
         const res = await geminiGenerate({ system: systemPrompt(lang, state), contents, tools: TOOLS, maxOutputTokens: 400, timeoutMs: left });
         const calls = res.parts.filter((p) => p.functionCall);
