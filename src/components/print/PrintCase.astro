@@ -1,0 +1,89 @@
+---
+import Diagram from '../Diagram.astro';
+import type { Case } from '../../data/cases';
+import { projects, kindLabel, profile, type Lang } from '../../data/profile';
+import { caseUi, casePath } from '../../i18n';
+
+interface Props { lang: Lang; c: Case; site: string }
+const { lang, c, site } = Astro.props;
+const t = caseUi[lang];
+const p = projects.find((x) => x.slug === c.slug)!;
+const url = (path: string) => site.replace(/\/$/, '') + path;
+const caseUrl = url(casePath(lang, c.slug));
+const demoUrl = c.links?.demo ? url(c.links.demo[lang]) : null;
+const short = (u: string) => u.replace(/^https?:\/\//, '');
+---
+<section class="page case">
+  <header class="top">
+    <span>{profile.name} · {profile.role[lang]}</span>
+    <span>{short(url(lang === 'es' ? '/' : '/en/'))}</span>
+  </header>
+
+  <div class="title">
+    <div class="tags">
+      <span class="kind">{kindLabel[p.kind][lang]}</span>
+      {p.status && <span class="status">● {p.status[lang]}</span>}
+    </div>
+    <h1>{p.title[lang]}</h1>
+    <p class="tagline">{c.tagline[lang]}</p>
+  </div>
+
+  <div class="meta">
+    <div><b>{t.context}</b><p>{c.context[lang]}</p></div>
+    <div><b>{t.role}</b><p>{c.role[lang]}</p></div>
+    <div><b>{t.stack}</b><p>{p.stack.map((s) => <span class="chip">{s}</span>)}</p></div>
+  </div>
+
+  <div class="two">
+    <div><h2>{t.problem}</h2>{c.problem[lang].map((x) => <p>{x}</p>)}</div>
+    <div><h2>{t.solution}</h2>{c.solution[lang].map((x) => <p>{x}</p>)}</div>
+  </div>
+
+  <h2>{t.architecture}</h2>
+  <Diagram lang={lang} flow={c.flow} light />
+
+  <h2>{t.decisions}</h2>
+  <div class="decisions">
+    {c.decisions.map((d, i) => (
+      <div class="dec"><b>{String(i + 1).padStart(2, '0')} · {d.title[lang]}</b><p>{d.text[lang]}</p></div>
+    ))}
+  </div>
+
+  <h2>{t.results}</h2>
+  <ul class="results">{c.results[lang].map((r) => <li>{r}</li>)}</ul>
+  {c.confidential && <p class="note">{c.confidential[lang]}</p>}
+
+  <footer class="links">
+    {demoUrl && <p><b>{lang === 'es' ? 'Demo en vivo:' : 'Live demo:'}</b> <a href={demoUrl}>{short(demoUrl)}</a></p>}
+    <p><b>{lang === 'es' ? 'Caso completo:' : 'Full case:'}</b> <a href={caseUrl}>{short(caseUrl)}</a></p>
+    {c.links?.repo && <p><b>{lang === 'es' ? 'Código:' : 'Code:'}</b> <a href={c.links.repo}>{short(c.links.repo)}</a></p>}
+    <p><b>{lang === 'es' ? 'Contacto:' : 'Contact:'}</b> {profile.contact.email}</p>
+  </footer>
+</section>
+
+<style>
+  .top { display: flex; justify-content: space-between; font-size: 7.8pt; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 5px; margin-bottom: 12px; }
+  .tags { display: flex; gap: 8px; align-items: center; margin-bottom: 5px; }
+  .kind { font-family: var(--mono); font-size: 7.4pt; color: var(--accent); background: var(--accent-bg); padding: 1px 7px; border-radius: 4px; }
+  .status { font-size: 8pt; color: var(--accent); }
+  h1 { font-size: 17pt; letter-spacing: -0.01em; margin-bottom: 3px; }
+  .tagline { margin: 0 0 8px; color: #333; font-size: 9.8pt; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; margin-bottom: 4px; }
+  .meta div { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  .meta b { display: block; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-bottom: 2px; }
+  .meta p { margin: 0; font-size: 8.6pt; }
+  h2 { font-size: 9.6pt; margin: 9px 0 4px; padding-bottom: 2px; border-bottom: 1.5px solid var(--ink); text-transform: uppercase; letter-spacing: .05em; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .two p { margin: 0 0 3px; font-size: 8.4pt; line-height: 1.35; }
+  .decisions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 14px; }
+  .dec { break-inside: avoid; }
+  .dec b { display: block; font-size: 8.6pt; margin-bottom: 1px; }
+  .dec p { margin: 0; color: #333; font-size: 7.9pt; line-height: 1.35; }
+  .results { font-size: 8.6pt; }
+  .results { margin: 0; padding-left: 16px; }
+  .results li { margin-bottom: 2px; }
+  .results li::marker { color: var(--accent); }
+  .note { margin: 6px 0 0; color: var(--muted); font-size: 8pt; font-style: italic; }
+  .links { margin-top: 8px; padding: 6px 10px; background: #f6f8fa; border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; font-size: 8.6pt; }
+  .links p { margin: 0; }
+</style>

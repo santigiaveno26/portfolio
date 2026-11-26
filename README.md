@@ -24,9 +24,24 @@ npm run build
 | Fondo animado del inicio                     | `src/components/Hero.astro`               |
 | Colores y tipografía                         | `src/styles/global.css` (`:root`)         |
 | Orden de las secciones                       | `src/components/Page.astro`               |
+| Casos completos de cada proyecto             | `src/data/cases.ts`                       |
+| Demo del agente de WhatsApp (empresa ficticia) | `src/data/demo-agent.ts` + `src/pages/api/demo-agent.ts` |
+| Demo de DandIA (fábrica ficticia)            | `src/data/demo-factory.ts` + `src/pages/api/demo-dandia.ts` |
+| Diseño de los PDF                            | `src/components/print/`                   |
 
-Para **agregar un proyecto**, sumá un objeto al array `projects` en `profile.ts`, con el texto en
-`es` y `en`. Con `featured: true` aparece en la fila de destacados. El chat lo aprende solo.
+Para **agregar un proyecto**, sumá un objeto al array `projects` en `profile.ts` (con un `slug`) y su
+caso en `cases.ts`, con el texto en `es` y `en`. Con `featured: true` aparece en la fila de destacados.
+El chat lo aprende solo.
+
+## PDF para adjuntar
+
+`public/pdf/` tiene el portfolio completo (ES/EN) y un PDF de una página por caso. Se generan desde las
+páginas `/pdf/` y `/en/pdf/` (no enlazadas en el sitio). **Después de cambiar contenido, regeneralos:**
+
+```bash
+npm run dev
+powershell -ExecutionPolicy Bypass -File scripts\generar-pdfs.ps1
+```
 
 **Privacidad:** los clientes se describen sin nombrarlos ("Empresa metalúrgica…"). Mantener esa regla.
 

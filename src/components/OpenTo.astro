@@ -1,6 +1,6 @@
 ---
 import { openTo, profile, type Lang } from '../data/profile';
-import { ui } from '../i18n';
+import { ui, pdfPath } from '../i18n';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -37,6 +37,7 @@ const wa = profile.contact.whatsapp
           <a class="btn" href={profile.cvs[lang]} download>{ui[lang].downloadCv}</a>
           <a class="btn" href={profile.contact.linkedin} target="_blank" rel="noopener">LinkedIn</a>
         </div>
+        <a class="pdf" href={pdfPath(lang)} download>📎 {lang === 'es' ? 'Portfolio completo en PDF (para adjuntar)' : 'Full portfolio as PDF (to attach)'}</a>
       </article>
 
       <article class="card spot build-block">
@@ -77,5 +78,7 @@ const wa = profile.contact.whatsapp
   .details { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 8px; }
   .details li { font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+  .pdf { margin-top: 14px; font-size: 0.86rem; color: var(--muted); text-decoration: none; }
+  .pdf:hover { color: var(--accent); }
   @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
 </style>

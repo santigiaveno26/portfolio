@@ -99,7 +99,7 @@ export const kindLabel: Record<Kind, L> = {
 
 export type Project = {
   slug: string; // página del caso: /proyectos/<slug> (contenido en data/cases.ts)
-  demo?: boolean; // tiene demo en vivo
+  demo?: 'agent' | 'dandia'; // tiene demo en vivo
   title: L;
   client: L;
   kind: Kind;
@@ -114,7 +114,7 @@ export type Project = {
 export const projects: Project[] = [
   {
     slug: 'agente-whatsapp-rag',
-    demo: true,
+    demo: 'agent',
     title: { es: 'Agente de WhatsApp con Agentic RAG', en: 'WhatsApp agent with Agentic RAG' },
     client: { es: 'Empresa metalúrgica · fabricante de maquinaria', en: 'Metalworking company · machinery manufacturer' },
     kind: 'client',
@@ -142,6 +142,7 @@ export const projects: Project[] = [
   },
   {
     slug: 'dandia-demanda',
+    demo: 'dandia',
     title: { es: 'DandIA + modelo de demanda de materiales', en: 'DandIA + material demand model' },
     client: { es: 'Danda SRL · cocinas industriales', en: 'Danda SRL · industrial kitchen manufacturer' },
     kind: 'internship',

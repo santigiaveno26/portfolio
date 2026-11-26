@@ -1,0 +1,11 @@
+---
+import PrintLayout from '../../../components/print/PrintLayout.astro';
+import PrintCover from '../../../components/print/PrintCover.astro';
+import PrintCase from '../../../components/print/PrintCase.astro';
+import { cases } from '../../../data/cases';
+const site = (Astro.site ?? new URL('http://localhost')).href;
+---
+<PrintLayout lang="en" title="Portfolio · Santiago Giaveno">
+  <PrintCover lang="en" site={site} />
+  {cases.map((c) => <PrintCase lang="en" c={c} site={site} />)}
+</PrintLayout>

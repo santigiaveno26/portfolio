@@ -2,10 +2,10 @@
 import type { Node } from '../data/cases';
 import type { Lang } from '../data/profile';
 
-interface Props { lang: Lang; flow: Node[][] }
-const { lang, flow } = Astro.props;
+interface Props { lang: Lang; flow: Node[][]; light?: boolean }
+const { lang, flow, light = false } = Astro.props;
 ---
-<div class="diagram" role="img" aria-label={flow.map((col) => col.map((n) => n.label[lang]).join(' + ')).join(' → ')}>
+<div class:list={['diagram', { light }]} role="img" aria-label={flow.map((col) => col.map((n) => n.label[lang]).join(' + ')).join(' → ')}>
   {flow.map((col, i) => (
     <>
       {i > 0 && <div class="arrow" aria-hidden="true"><span></span></div>}
@@ -53,7 +53,7 @@ const { lang, flow } = Astro.props;
   }
   @keyframes flow { to { background-position: 22px 0; } }
 
-  @media (max-width: 760px) {
+  @media screen and (max-width: 760px) {
     .diagram { flex-direction: column; padding: 20px 16px; }
     .col { flex-direction: row; flex-wrap: wrap; justify-content: center; min-width: 0; }
     .col .node { flex: 1 1 140px; }
@@ -63,4 +63,17 @@ const { lang, flow } = Astro.props;
     @keyframes flowv { to { background-position: 0 22px; } }
   }
   @media (prefers-reduced-motion: reduce) { .arrow span { animation: none; } }
+
+  /* Variante clara para los PDF (impresión) */
+  .diagram.light { background: #f6f8fa; border-color: #d0d7de; padding: 10px 10px; overflow: visible; }
+  .light .node { background: #fff; border-color: #d0d7de; padding: 5px 7px; }
+  .light .node small { line-height: 1.25; }
+  .light .node strong { color: #111; font-size: 9pt; }
+  .light .node small { color: #57606a; font-size: 7pt; }
+  .light .node.accent { background: #e9fbf4; border-color: #1a9e70; box-shadow: none; }
+  .light .node.accent strong { color: #0b7a55; }
+  .light .col { min-width: 0; gap: 6px; }
+  .light .arrow { flex-basis: 22px; }
+  .light .arrow span { animation: none; background: #1a9e70; opacity: 1; height: 1.5px; }
+  .light .arrow span::after { border-left-color: #1a9e70; }
 </style>

@@ -1,0 +1,12 @@
+---
+// Fuente del PDF completo del portfolio (se imprime con scripts/generar-pdfs.ps1). No está enlazada en el sitio.
+import PrintLayout from '../../components/print/PrintLayout.astro';
+import PrintCover from '../../components/print/PrintCover.astro';
+import PrintCase from '../../components/print/PrintCase.astro';
+import { cases } from '../../data/cases';
+const site = (Astro.site ?? new URL('http://localhost')).href;
+---
+<PrintLayout lang="es" title="Portfolio · Santiago Giaveno">
+  <PrintCover lang="es" site={site} />
+  {cases.map((c) => <PrintCase lang="es" c={c} site={site} />)}
+</PrintLayout>

@@ -1,0 +1,379 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import Motion from './Motion.astro';
+import { FACTORY, MATERIALS } from '../data/demo-factory';
+import { profile, type Lang } from '../data/profile';
+import { casePath, demoPath, otherLang } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const other = otherLang(lang);
+
+const t = {
+  es: {
+    title: 'Demo: DandIA, asistente de datos para una fábrica',
+    sub: 'La misma idea del asistente que construí en mi pasantía: la gerencia pregunta en lenguaje natural y la IA consulta los datos con herramientas de solo lectura y elige si responder con texto, tabla, tarjetas o gráfico.',
+    fake: `Datos 100 % inventados de ${FACTORY.es}.`,
+    placeholder: 'Preguntá sobre stock, compras, consumo o producción…',
+    send: 'Enviar',
+    welcome: 'Hola, soy DandIA. Preguntame por el stock, qué conviene comprar, la proyección de un material o las órdenes de producción.',
+    tryTitle: 'Preguntas para probar',
+    tries: [
+      '¿Qué materiales tengo que comprar esta semana?',
+      'Mostrame la proyección de la chapa inox 0,8 mm',
+      '¿Cómo viene el consumo de quemadores de bronce?',
+      '¿Me alcanza el stock para fabricar 15 cocinas de 6 hornallas?',
+      'Compará el stock de las tres chapas en un gráfico',
+      '¿Qué órdenes de producción están abiertas?',
+    ],
+    inside: 'Herramientas que usó',
+    insideSub: 'El modelo nunca escribe SQL: solo llama herramientas de lectura ya revisadas.',
+    waiting: 'Hacé una pregunta para ver qué herramientas elige.',
+    data: 'Materiales de la demo',
+    thinking: 'consultando los datos…',
+    error: 'No pude responder. Probá de nuevo.',
+    reset: 'Nueva conversación',
+    ai: 'IA', offline: 'modo sin IA',
+    caseLink: 'Ver el caso completo',
+    diffTitle: 'Diferencias con el sistema real',
+    diffs: [
+      'El real trabaja sobre un data warehouse en PostgreSQL con 22 tablas y 18 vistas, alimentado por un ETL semanal.',
+      'La proyección real sale de un modelo validado con backtesting (~92 % de cobertura); acá las series son simuladas.',
+      'El real usa un usuario de base de datos de solo lectura y permite anclar gráficos a un tablero.',
+    ],
+  },
+  en: {
+    title: 'Demo: DandIA, a data assistant for a factory',
+    sub: 'The same idea as the assistant I built during my internship: management asks in natural language, and the AI queries the data through read-only tools and chooses whether to answer with text, a table, KPI cards or a chart.',
+    fake: `100% made-up data from ${FACTORY.en}.`,
+    placeholder: 'Ask about stock, purchasing, usage or production…',
+    send: 'Send',
+    welcome: "Hi, I'm DandIA. Ask me about stock, what to buy, a material's forecast or production orders.",
+    tryTitle: 'Questions to try',
+    tries: [
+      'Which materials do I need to buy this week?',
+      'Show me the forecast for the 0.8 mm stainless sheet',
+      'How has bronze burner usage been trending?',
+      'Do I have enough stock to build 15 six-burner ranges?',
+      'Compare the stock of the three sheets in a chart',
+      'Which production orders are open?',
+    ],
+    inside: 'Tools it used',
+    insideSub: 'The model never writes SQL: it only calls reviewed, read-only tools.',
+    waiting: 'Ask a question to see which tools it chooses.',
+    data: 'Demo materials',
+    thinking: 'querying the data…',
+    error: "I couldn't answer. Please try again.",
+    reset: 'New conversation',
+    ai: 'AI', offline: 'no-AI mode',
+    caseLink: 'Read the full case',
+    diffTitle: 'Differences from the real system',
+    diffs: [
+      'The real one runs on a PostgreSQL data warehouse with 22 tables and 18 views, fed by a weekly ETL.',
+      'The real forecast comes from a backtested model (~92% coverage); here the series are simulated.',
+      'The real one uses a read-only database user and lets you pin charts to a dashboard.',
+    ],
+  },
+}[lang];
+---
+<Base lang={lang} title={`${t.title} · ${profile.name}`} description={t.sub} alternates={{ es: demoPath('es', 'dandia'), en: demoPath('en', 'dandia') }}>
+  <Nav lang={lang} home={false} altHref={demoPath(other, 'dandia')} />
+  <main class="container demo" data-dandia data-lang={lang} data-i18n={JSON.stringify({ thinking: t.thinking, error: t.error, waiting: t.waiting, ai: t.ai, offline: t.offline, welcome: t.welcome })}>
+    <header class="head build-block">
+      <a class="back" href={casePath(lang, 'dandia-demanda')}>← {t.caseLink}</a>
+      <h1>{t.title}</h1>
+      <p>{t.sub}</p>
+      <p class="fake">🧪 {t.fake}</p>
+    </header>
+
+    <div class="layout">
+      <div class="chat build-block" role="region" aria-label="DandIA">
+        <div class="chat-head">
+          <span class="logo">D</span>
+          <div><strong>DandIA</strong><small>{FACTORY[lang]}</small></div>
+          <button type="button" class="reset" data-reset>↺ {t.reset}</button>
+        </div>
+        <div class="msgs" data-msgs aria-live="polite"></div>
+        <form class="input" data-form>
+          <input name="q" maxlength="400" autocomplete="off" placeholder={t.placeholder} aria-label={t.placeholder} />
+          <button type="submit">{t.send}</button>
+        </form>
+      </div>
+
+      <aside class="side">
+        <div class="panel build-block">
+          <h2>{t.tryTitle}</h2>
+          <div class="tries">{t.tries.map((q) => <button type="button" data-send={q}>{q}</button>)}</div>
+        </div>
+        <div class="panel build-block">
+          <h2>{t.inside}</h2>
+          <p class="muted">{t.insideSub}</p>
+          <ol class="trace" data-trace><li class="empty">{t.waiting}</li></ol>
+        </div>
+        <div class="panel build-block">
+          <h2>{t.diffTitle}</h2>
+          <ul class="diffs">{t.diffs.map((d) => <li>{d}</li>)}</ul>
+        </div>
+      </aside>
+    </div>
+
+    <div class="panel build-block mats">
+      <h2>{t.data}</h2>
+      <div class="mat-list">{MATERIALS.map((m) => <span class="chip">{m.code} · {m.name[lang]}</span>)}</div>
+    </div>
+  </main>
+  <Motion />
+</Base>
+
+<script>
+  type Chart = { kind: 'line' | 'bar' | 'pie'; title: string; labels: string[]; series: { name: string; values: number[] }[]; band?: { low: number[]; high: number[] }; unit?: string };
+  type Table = { title: string; columns: string[]; rows: (string | number)[][] };
+  type Kpi = { label: string; value: string; hint?: string; tone?: string };
+
+  const root = document.querySelector<HTMLElement>('[data-dandia]')!;
+  const lang = root.dataset.lang as 'es' | 'en';
+  const t = JSON.parse(root.dataset.i18n!);
+  const msgs = root.querySelector<HTMLElement>('[data-msgs]')!;
+  const traceEl = root.querySelector<HTMLOListElement>('[data-trace]')!;
+  const form = root.querySelector<HTMLFormElement>('[data-form]')!;
+  const input = form.querySelector('input')!;
+  let history: { role: string; text: string }[] = [];
+  let busy = false;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = '') => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
+  const sv = (tag: string, attrs: Record<string, string | number>, text?: string) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v)); if (text != null) e.textContent = text; return e; };
+  const nf = (x: number) => x.toLocaleString(lang === 'es' ? 'es-AR' : 'en-US');
+  const PALETTE = ['#3ee0a8', '#5aa9ff', '#f0a6ff', '#ffb547', '#ff7a7a', '#9be15d', '#7bdff2', '#c3a6ff'];
+
+  // ── Gráficos en SVG (sin librerías) ──
+  function chart(c: Chart) {
+    const box = el('figure', 'chart');
+    box.append(el('figcaption', '', c.title));
+    const W = 520, H = 220, P = { l: 46, r: 26, t: 12, b: 34 };
+    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': c.title });
+    if (c.kind === 'pie') {
+      const vals = c.series[0].values, total = vals.reduce((s, x) => s + x, 0) || 1;
+      const cx = 110, cy = H / 2, r = 80, ri = 48;
+      let a0 = -Math.PI / 2;
+      vals.forEach((v, i) => {
+        const a1 = a0 + (v / total) * Math.PI * 2;
+        const large = a1 - a0 > Math.PI ? 1 : 0;
+        const p = (a: number, rr: number) => `${cx + rr * Math.cos(a)} ${cy + rr * Math.sin(a)}`;
+        const d = `M ${p(a0, r)} A ${r} ${r} 0 ${large} 1 ${p(a1, r)} L ${p(a1, ri)} A ${ri} ${ri} 0 ${large} 0 ${p(a0, ri)} Z`;
+        const path = sv('path', { d, fill: PALETTE[i % PALETTE.length] });
+        path.append(sv('title', {}, `${c.labels[i]}: ${nf(v)}`));
+        svg.append(path);
+        svg.append(sv('rect', { x: 230, y: 24 + i * 22, width: 10, height: 10, rx: 2, fill: PALETTE[i % PALETTE.length] }));
+        svg.append(sv('text', { x: 246, y: 33 + i * 22, class: 'lg' }, `${c.labels[i]} — ${nf(v)} (${Math.round((v / total) * 100)} %)`));
+        a0 = a1;
+      });
+    } else {
+      const vals = c.series[0].values;
+      const all = [...vals, ...(c.band?.high ?? [])];
+      const max = Math.max(...all, 1) * 1.1;
+      const iw = W - P.l - P.r, ih = H - P.t - P.b;
+      const x = (i: number) => P.l + (c.kind === 'bar' ? (i + 0.5) * (iw / vals.length) : (vals.length === 1 ? iw / 2 : (i * iw) / (vals.length - 1)));
+      const y = (v: number) => P.t + ih - (v / max) * ih;
+      for (let k = 0; k <= 3; k++) {
+        const v = (max / 3) * k, yy = y(v);
+        svg.append(sv('line', { x1: P.l, x2: W - P.r, y1: yy, y2: yy, class: 'grid' }));
+        svg.append(sv('text', { x: P.l - 6, y: yy + 4, class: 'ax', 'text-anchor': 'end' }, nf(Math.round(v))));
+      }
+      const step = Math.ceil(c.labels.length / 8);
+      c.labels.forEach((l, i) => { if (i % step === 0) svg.append(sv('text', { x: x(i), y: H - 12, class: 'ax', 'text-anchor': 'middle' }, l)); });
+      if (c.kind === 'bar') {
+        const bw = Math.min(38, (iw / vals.length) * 0.65);
+        vals.forEach((v, i) => {
+          const r = sv('rect', { x: x(i) - bw / 2, y: y(v), width: bw, height: Math.max(0, P.t + ih - y(v)), rx: 3, class: 'bar', style: `animation-delay:${i * 40}ms` });
+          r.append(sv('title', {}, `${c.labels[i]}: ${nf(v)}${c.unit ? ' ' + c.unit : ''}`));
+          svg.append(r);
+        });
+      } else {
+        if (c.band) {
+          const up = c.band.high.map((v, i) => `${x(i)},${y(v)}`), down = c.band.low.map((v, i) => `${x(i)},${y(v)}`).reverse();
+          svg.append(sv('polygon', { points: [...up, ...down].join(' '), class: 'band' }));
+        }
+        svg.append(sv('polyline', { points: vals.map((v, i) => `${x(i)},${y(v)}`).join(' '), class: 'line' }));
+        vals.forEach((v, i) => {
+          const dot = sv('circle', { cx: x(i), cy: y(v), r: 3.5, class: 'dot' });
+          const extra = c.band ? ` (${nf(c.band.low[i])}–${nf(c.band.high[i])})` : '';
+          dot.append(sv('title', {}, `${c.labels[i]}: ${nf(v)}${extra}${c.unit ? ' ' + c.unit : ''}`));
+          svg.append(dot);
+        });
+      }
+    }
+    box.append(svg);
+    if (c.band) box.append(el('p', 'legend', lang === 'es' ? 'Línea: consumo esperado · Franja: rango probable' : 'Line: expected usage · Band: likely range'));
+    return box;
+  }
+
+  function table(tb: Table) {
+    const wrap = el('div', 'tbl');
+    if (tb.title) wrap.append(el('p', 'tbl-title', tb.title));
+    const tab = el('table');
+    const tr = el('tr');
+    tb.columns.forEach((c) => tr.append(el('th', '', c)));
+    const thead = el('thead'); thead.append(tr); tab.append(thead);
+    const tbody = el('tbody');
+    tb.rows.forEach((r) => { const row = el('tr'); r.forEach((c) => { const td = el('td', '', String(c)); if (c === '✗') td.className = 'bad'; if (c === '✓') td.className = 'ok'; row.append(td); }); tbody.append(row); });
+    tab.append(tbody);
+    wrap.append(tab);
+    return wrap;
+  }
+
+  function kpis(list: Kpi[]) {
+    const row = el('div', 'kpis');
+    list.forEach((k) => { const c = el('div', `kpi ${k.tone ?? ''}`); c.append(el('strong', '', k.value), el('span', '', k.label)); if (k.hint) c.append(el('small', '', k.hint)); row.append(c); });
+    return row;
+  }
+
+  function addMsg(role: 'user' | 'bot', text: string, extras?: { charts?: Chart[]; tables?: Table[]; kpis?: Kpi[] }, cls = '') {
+    const m = el('div', `msg ${role} ${cls}`);
+    m.append(el('p', '', text));
+    if (extras?.kpis?.length) m.append(kpis(extras.kpis));
+    extras?.tables?.forEach((x) => m.append(table(x)));
+    extras?.charts?.forEach((x) => m.append(chart(x)));
+    msgs.append(m);
+    msgs.scrollTop = msgs.scrollHeight;
+    return m;
+  }
+
+  function addTrace(q: string, steps: { tool: string; detail: string }[], source: string) {
+    traceEl.querySelector('.empty')?.remove();
+    const li = el('li');
+    const h = el('div', 'th');
+    h.append(el('span', '', `“${q}”`), el('em', `src ${source}`, source === 'ai' ? t.ai : t.offline));
+    li.append(h);
+    steps.forEach((s) => { const r = el('div', 'st'); r.append(el('code', '', s.tool), el('span', '', s.detail)); li.append(r); });
+    traceEl.prepend(li);
+  }
+
+  async function send(q: string) {
+    q = q.trim();
+    if (!q || busy) return;
+    busy = true;
+    addMsg('user', q);
+    const wait = addMsg('bot', t.thinking, undefined, 'wait');
+    try {
+      const res = await fetch('/api/demo-dandia', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message: q, lang, history }) });
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      wait.remove();
+      addMsg('bot', d.reply || t.error, d);
+      addTrace(q, d.trace ?? [], d.source);
+      history.push({ role: 'user', text: q }, { role: 'model', text: d.reply });
+      history = history.slice(-6);
+    } catch {
+      wait.remove();
+      addMsg('bot', t.error);
+    } finally { busy = false; }
+  }
+
+  function reset() {
+    history = [];
+    msgs.replaceChildren();
+    addMsg('bot', t.welcome);
+    traceEl.innerHTML = '';
+    traceEl.append(el('li', 'empty', t.waiting));
+  }
+
+  form.addEventListener('submit', (e) => { e.preventDefault(); const v = input.value; input.value = ''; send(v); });
+  root.querySelectorAll<HTMLButtonElement>('[data-send]').forEach((b) => b.addEventListener('click', () => send(b.dataset.send!)));
+  root.querySelector('[data-reset]')!.addEventListener('click', reset);
+  reset();
+</script>
+
+<style>
+  .demo { padding-top: 34px; padding-bottom: 60px; }
+  .head { max-width: 860px; margin-bottom: 24px; }
+  .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back:hover { color: var(--accent); }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 14px 0 10px; letter-spacing: -0.02em; }
+  .head p { color: var(--muted); margin: 0 0 6px; font-size: 1.02rem; }
+  .head .fake { font-size: 0.88rem; color: var(--warn); }
+
+  .layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+  .chat { border: 1px solid var(--border); border-radius: 18px; background: #0a0e13; display: flex; flex-direction: column; height: 720px; overflow: hidden; }
+  .chat-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: #111821; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 800; border: 1px solid rgba(62,224,168,.3); }
+  .chat-head div { flex: 1; }
+  .chat-head strong { display: block; }
+  .chat-head small { color: var(--muted); font-size: 0.78rem; }
+  .reset { font: 0.78rem var(--font); color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 5px 9px; cursor: pointer; }
+  .reset:hover { color: var(--text); border-color: var(--accent); }
+
+  .msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .msgs :global(.msg) { max-width: 92%; animation: up .25s ease; }
+  .msgs :global(.msg > p) { margin: 0; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap; line-height: 1.5; font-size: 0.93rem; }
+  .msgs :global(.msg.user) { align-self: flex-end; }
+  .msgs :global(.msg.user > p) { background: var(--accent-soft); border: 1px solid rgba(62,224,168,.3); }
+  .msgs :global(.msg.bot) { align-self: flex-start; width: 92%; }
+  .msgs :global(.msg.bot > p) { background: var(--surface); border: 1px solid var(--border); }
+  .msgs :global(.msg.wait > p) { color: var(--muted); font-style: italic; }
+  @keyframes up { from { opacity: 0; transform: translateY(6px); } }
+
+  .msgs :global(.kpis) { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .msgs :global(.kpi) { flex: 1 1 120px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .msgs :global(.kpi strong) { display: block; font-size: 1.35rem; }
+  .msgs :global(.kpi span) { color: var(--muted); font-size: 0.8rem; }
+  .msgs :global(.kpi small) { display: block; color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+  .msgs :global(.kpi.bad strong) { color: #ff8a8a; }
+  .msgs :global(.kpi.warn strong) { color: var(--warn); }
+  .msgs :global(.kpi.ok strong) { color: var(--accent); }
+
+  .msgs :global(.tbl) { margin-top: 10px; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .msgs :global(.tbl-title) { margin: 0; padding: 8px 12px; font-size: 0.82rem; color: var(--muted); border-bottom: 1px solid var(--border); background: #111821; }
+  .msgs :global(table) { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  .msgs :global(th) { text-align: left; font-weight: 600; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .msgs :global(td) { padding: 7px 12px; border-bottom: 1px solid #1a232e; }
+  .msgs :global(tr:last-child td) { border-bottom: 0; }
+  .msgs :global(td.bad) { color: #ff8a8a; font-weight: 700; }
+  .msgs :global(td.ok) { color: var(--accent); font-weight: 700; }
+
+  .msgs :global(.chart) { margin: 10px 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px 8px; }
+  .msgs :global(.chart figcaption) { font-size: 0.84rem; color: var(--text); margin-bottom: 4px; }
+  .msgs :global(.chart svg) { width: 100%; height: auto; display: block; }
+  .msgs :global(.chart .grid) { stroke: #1f2a36; }
+  .msgs :global(.chart .ax) { fill: var(--muted); font-size: 10px; font-family: var(--mono); }
+  .msgs :global(.chart .lg) { fill: var(--text); font-size: 11px; }
+  .msgs :global(.chart .bar) { fill: var(--accent); opacity: .85; transform-origin: bottom; transform-box: fill-box; animation: grow .5s ease both; }
+  .msgs :global(.chart .bar:hover), .msgs :global(.chart path:hover) { opacity: 1; filter: brightness(1.15); }
+  .msgs :global(.chart .band) { fill: rgba(90,169,255,.16); }
+  .msgs :global(.chart .line) { fill: none; stroke: var(--accent-2); stroke-width: 2.5; stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: draw 1s ease forwards; }
+  .msgs :global(.chart .dot) { fill: var(--accent-2); }
+  .msgs :global(.chart .legend) { margin: 4px 0 0; color: var(--muted); font-size: 0.74rem; }
+  @keyframes grow { from { transform: scaleY(0); } }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); background: #111821; }
+  .input input { flex: 1; min-width: 0; font: 0.92rem var(--font); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .input input:focus { outline: none; border-color: var(--accent); }
+  .input button { font: 600 0.88rem var(--font); border: 0; border-radius: 10px; padding: 0 16px; background: var(--accent); color: #04120c; cursor: pointer; }
+
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .panel h2 { margin: 0 0 8px; font-size: 1rem; }
+  .muted { color: var(--muted); font-size: 0.84rem; margin: 0 0 10px; }
+  .tries { display: flex; flex-direction: column; gap: 6px; }
+  .tries button { text-align: left; font: 0.85rem var(--font); color: var(--text); background: #0f151c; border: 1px solid var(--border); border-radius: 9px; padding: 9px 11px; cursor: pointer; transition: border-color .2s; }
+  .tries button:hover { border-color: var(--accent); }
+  .trace { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; }
+  .trace :global(li) { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; background: #0f151c; font-size: 0.8rem; }
+  .trace :global(li.empty) { color: var(--muted); border-style: dashed; text-align: center; }
+  .trace :global(.th) { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .trace :global(.src) { font-style: normal; font-family: var(--mono); font-size: 0.66rem; padding: 1px 6px; border-radius: 999px; white-space: nowrap; align-self: flex-start; }
+  .trace :global(.src.ai) { color: var(--accent); background: var(--accent-soft); }
+  .trace :global(.src.offline) { color: var(--warn); background: rgba(255,181,71,.1); }
+  .trace :global(.st) { border-left: 2px solid var(--accent); padding-left: 8px; margin-top: 4px; }
+  .trace :global(.st code) { display: block; font-family: var(--mono); color: var(--accent-2); font-size: 0.74rem; }
+  .trace :global(.st span) { color: var(--muted); }
+  .diffs { margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.84rem; }
+  .diffs li { margin-bottom: 6px; }
+  .mats { margin-top: 20px; }
+  .mat-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .chat { height: 620px; } }
+  @media (prefers-reduced-motion: reduce) { .msgs :global(.chart .bar), .msgs :global(.chart .line) { animation: none; stroke-dashoffset: 0; } }
+</style>

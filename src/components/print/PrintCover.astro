@@ -1,0 +1,84 @@
+---
+import { cases } from '../../data/cases';
+import { experience, openTo, profile, projects, skills, kindLabel, type Lang } from '../../data/profile';
+import { casePath, demoPath } from '../../i18n';
+
+interface Props { lang: Lang; site: string }
+const { lang, site } = Astro.props;
+const es = lang === 'es';
+const url = (path: string) => site.replace(/\/$/, '') + path;
+const short = (u: string) => u.replace(/^https?:\/\//, '');
+const home = url(es ? '/' : '/en/');
+---
+<section class="page cover">
+  <div class="band">
+    <h1>{profile.name}</h1>
+    <p class="role">{profile.role[lang]}</p>
+    <p class="contact">
+      {profile.location[lang]} · {profile.contact.email} · +54 3471-332479<br />
+      <b>Portfolio:</b> <a href={home}>{short(home)}</a> · <b>LinkedIn:</b> {short(profile.contact.linkedin).replace('www.', '')} · <b>GitHub:</b> {short(profile.contact.github)}
+    </p>
+  </div>
+
+  <p class="summary">{profile.tagline[lang]} {profile.about[lang][profile.about[lang].length - 1]}</p>
+
+  <div class="open">
+    <b>{es ? 'Busco:' : 'Looking for:'}</b> {openTo.job.roles[lang].join(' · ')}<br />
+    <span>{openTo.job.details[lang].join(' · ')}</span>
+  </div>
+
+  <h2>{es ? 'Proyectos en este documento' : 'Projects in this document'}</h2>
+  <ol class="index">
+    {cases.map((c, i) => {
+      const p = projects.find((x) => x.slug === c.slug)!;
+      return (
+        <li>
+          <span class="n">{i + 2}</span>
+          <div>
+            <b>{p.title[lang]}</b> <em>{kindLabel[p.kind][lang]}{p.status ? ` · ${p.status[lang]}` : ''}</em>
+            <p>{p.summary[lang]}</p>
+          </div>
+        </li>
+      );
+    })}
+  </ol>
+
+  <div class="cols">
+    <div>
+      <h2>{es ? 'Experiencia' : 'Experience'}</h2>
+      {experience.map((e) => <p class="exp"><b>{e.role[lang]}</b> — {e.company[lang]}<br /><span>{e.period[lang]} · {e.detail[lang]}</span></p>)}
+    </div>
+    <div>
+      <h2>Skills</h2>
+      {skills.map((s) => <p class="sk"><b>{s.group[lang]}:</b> {s.items.join(', ')}</p>)}
+      <p class="sk"><b>{es ? 'Idiomas' : 'Languages'}:</b> {profile.languages[lang]}</p>
+    </div>
+  </div>
+
+  <div class="demos">
+    <b>{es ? 'Demos en vivo (datos ficticios):' : 'Live demos (fictional data):'}</b>
+    <a href={url(demoPath(lang, 'agent'))}>{short(url(demoPath(lang, 'agent')))}</a> ·
+    <a href={url(demoPath(lang, 'dandia'))}>{short(url(demoPath(lang, 'dandia')))}</a>
+  </div>
+</section>
+
+<style>
+  .band { border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 10px; }
+  h1 { font-size: 24pt; letter-spacing: -0.01em; }
+  .role { margin: 2px 0 4px; font-weight: 700; font-size: 11.5pt; color: var(--accent); }
+  .contact { margin: 0; font-size: 8.4pt; color: #333; }
+  .summary { font-size: 10pt; margin: 0 0 8px; }
+  .open { background: var(--accent-bg); border-left: 3px solid var(--accent); padding: 6px 10px; font-size: 9pt; margin-bottom: 4px; border-radius: 0 6px 6px 0; }
+  .open span { color: #333; font-size: 8.4pt; }
+  h2 { font-size: 10.5pt; margin: 12px 0 6px; padding-bottom: 2px; border-bottom: 1.5px solid var(--ink); text-transform: uppercase; letter-spacing: .05em; }
+  .index { list-style: none; padding: 0; margin: 0; display: grid; gap: 5px; }
+  .index li { display: grid; grid-template-columns: 18px 1fr; gap: 6px; }
+  .n { font-family: var(--mono); font-size: 8pt; color: var(--accent); padding-top: 1px; }
+  .index b { font-size: 9.4pt; }
+  .index em { font-style: normal; font-size: 7.8pt; color: var(--muted); }
+  .index p { margin: 0; font-size: 8.5pt; color: #333; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .exp, .sk { margin: 0 0 4px; font-size: 8.6pt; }
+  .exp span { color: var(--muted); font-size: 8pt; }
+  .demos { margin-top: 12px; padding: 7px 10px; background: #f6f8fa; border-radius: 6px; font-size: 8.6pt; }
+</style>

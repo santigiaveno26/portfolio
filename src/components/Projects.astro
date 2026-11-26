@@ -31,7 +31,7 @@ const groups = [projects.filter((p) => p.featured), projects.filter((p) => !p.fe
             <div class="stack">{p.stack.map((s) => <span class="chip">{s}</span>)}</div>
             <div class="links">
               <a class="more" href={casePath(lang, p.slug)}>{c.seeCase} →</a>
-              {p.demo && <a class="demo" href={demoPath(lang)}><i></i>{c.tryDemo}</a>}
+              {p.demo && <a class="demo" href={demoPath(lang, p.demo)}><i></i>{c.tryDemo}</a>}
             </div>
           </article>
         ))}

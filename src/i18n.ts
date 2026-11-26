@@ -122,4 +122,10 @@ export const caseUi = {
 export const pathFor = (lang: Lang) => (lang === 'es' ? '/' : '/en/');
 export const otherLang = (lang: Lang): Lang => (lang === 'es' ? 'en' : 'es');
 export const casePath = (lang: Lang, slug: string) => (lang === 'es' ? `/proyectos/${slug}/` : `/en/projects/${slug}/`);
-export const demoPath = (lang: Lang) => (lang === 'es' ? '/demo/agente/' : '/en/demo/agent/');
+// PDFs para adjuntar (se generan con scripts/generar-pdfs.ps1)
+export const pdfPath = (lang: Lang, slug?: string) =>
+  slug ? `/pdf/Santiago_Giaveno_${lang === 'es' ? 'Caso' : 'Case'}_${slug}.pdf` : `/pdf/Portfolio_Santiago_Giaveno_${lang.toUpperCase()}.pdf`;
+
+export type DemoId = 'agent' | 'dandia';
+export const demoPath = (lang: Lang, which: DemoId = 'agent') =>
+  which === 'dandia' ? (lang === 'es' ? '/demo/dandia/' : '/en/demo/dandia/') : lang === 'es' ? '/demo/agente/' : '/en/demo/agent/';

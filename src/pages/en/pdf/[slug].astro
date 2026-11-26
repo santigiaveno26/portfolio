@@ -1,0 +1,13 @@
+---
+import PrintLayout from '../../../components/print/PrintLayout.astro';
+import PrintCase from '../../../components/print/PrintCase.astro';
+import { cases } from '../../../data/cases';
+export function getStaticPaths() {
+  return cases.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+const { c } = Astro.props;
+const site = (Astro.site ?? new URL('http://localhost')).href;
+---
+<PrintLayout lang="en" title={`Case · ${c.slug}`}>
+  <PrintCase lang="en" c={c} site={site} />
+</PrintLayout>

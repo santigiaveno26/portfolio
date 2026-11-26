@@ -6,7 +6,7 @@ import Chat from './Chat.astro';
 import Motion from './Motion.astro';
 import { cases, type Case } from '../data/cases';
 import { projects, kindLabel, profile, type Lang } from '../data/profile';
-import { caseUi, casePath, otherLang, pathFor } from '../i18n';
+import { caseUi, casePath, otherLang, pathFor, pdfPath } from '../i18n';
 
 interface Props { lang: Lang; c: Case }
 const { lang, c } = Astro.props;
@@ -38,6 +38,7 @@ const mailJob = `mailto:${profile.contact.email}?subject=${encodeURIComponent(la
         <div class="actions build-block">
           {c.links?.demo && <a class="btn btn-primary" href={c.links.demo[lang]}>▶ {t.demoCta}</a>}
           {c.links?.repo && <a class="btn" href={c.links.repo} target="_blank" rel="noopener">{t.repo} ↗</a>}
+          <a class="btn" href={pdfPath(lang, c.slug)} download>{lang === 'es' ? 'Este caso en PDF' : 'This case as PDF'} ↓</a>
         </div>
         <dl class="meta build-block">
           <div><dt>{t.context}</dt><dd>{c.context[lang]}</dd></div>

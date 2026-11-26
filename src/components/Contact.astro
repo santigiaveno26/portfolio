@@ -1,6 +1,6 @@
 ---
 import { profile, type Lang } from '../data/profile';
-import { ui } from '../i18n';
+import { ui, pdfPath } from '../i18n';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -24,6 +24,7 @@ const year = new Date().getFullYear();
         <a href={contact.github} target="_blank" rel="noopener">GitHub</a>
         <a href={cvs[lang]} download>{t.downloadCv} ↓</a>
         <a href={cvs[lang === 'es' ? 'en' : 'es']} download>{t.cvOther} ↓</a>
+        <a href={pdfPath(lang)} download>{lang === 'es' ? 'Portfolio completo en PDF' : 'Full portfolio as PDF'} ↓</a>
       </div>
     </div>
   </div>

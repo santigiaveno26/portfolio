@@ -182,9 +182,10 @@ export const cases: Case[] = [
         'Two additional models in production: product clustering by demand shape and materials worth buying together.',
       ],
     },
+    links: { demo: { es: '/demo/dandia/', en: '/en/demo/dandia/' } },
     confidential: {
-      es: 'Los datos de la empresa son confidenciales, por eso no hay capturas del sistema real.',
-      en: "The company's data is confidential, so there are no screenshots of the real system.",
+      es: 'Los datos de la empresa son confidenciales, por eso la demo usa una fábrica ficticia con datos inventados.',
+      en: "The company's data is confidential, so the demo uses a fictional factory with made-up data.",
     },
   },
 
